@@ -7,9 +7,22 @@ All notable changes to this project will be documented in this file.
 
 
 
+<a name="v4.19.0"></a>
+## [v4.19.0] - 2021-09-14
+
+- fix: change path for requirements.txt
+- fix: create smaller requirements file
+- fix: add requirements.txt to lambda module
+- fix: remove unnecessary environment variables
+- Update README.md
+- Update README.md
+- fix: remove unnecessary entries
+
+
 <a name="v4.18.0"></a>
 ## [v4.18.0] - 2021-09-14
 
+- chore: update changelog
 - chore: rename slack to teams chore: add aditional readme line chore: remove unnecessary parameters and variables
 - feat: first draft conversion slack to teams
 - feat: add additionals to gitignore
@@ -420,7 +433,8 @@ All notable changes to this project will be documented in this file.
 - Initial commit
 
 
-[Unreleased]: https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.18.0...HEAD
+[Unreleased]: https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.19.0...HEAD
+[v4.19.0]: https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.18.0...v4.19.0
 [v4.18.0]: https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.17.0...v4.18.0
 [v4.17.0]: https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.16.0...v4.17.0
 [v4.16.0]: https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.15.0...v4.16.0

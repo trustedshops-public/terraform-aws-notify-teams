@@ -84,7 +84,7 @@ module "lambda" {
     "${path.module}/functions/notify_teams.py",
     {
       path             = "${path.module}/functions"
-      pip_requirements = true
+      pip_requirements = "requirements_lambda.txt"
     }
   ]
   runtime                        = "python3.8"

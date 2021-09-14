@@ -129,9 +129,6 @@ To run the tests:
 | <a name="input_lambda_role"></a> [lambda\_role](#input\_lambda\_role) | IAM role attached to the Lambda Function.  If this is set then a role will not be created for you. | `string` | `""` | no |
 | <a name="input_log_events"></a> [log\_events](#input\_log\_events) | Boolean flag to enabled/disable logging of incoming events | `bool` | `false` | no |
 | <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | The amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations | `number` | `-1` | no |
-| <a name="input_teams_channel"></a> [teams\_channel](#input\_teams\_channel) | The name of the channel in Teams for notifications | `string` | n/a | yes |
-| <a name="input_teams_emoji"></a> [teams\_emoji](#input\_teams\_emoji) | A custom emoji that will appear on Teams messages | `string` | `":aws:"` | no |
-| <a name="input_teams_username"></a> [teams\_username](#input\_teams\_username) | The username that will appear on Teams messages | `string` | n/a | yes |
 | <a name="input_teams_webhook_url"></a> [teams\_webhook\_url](#input\_teams\_webhook\_url) | The URL of Teams webhook | `string` | n/a | yes |
 | <a name="input_sns_topic_kms_key_id"></a> [sns\_topic\_kms\_key\_id](#input\_sns\_topic\_kms\_key\_id) | ARN of the KMS key used for enabling SSE on the topic | `string` | `""` | no |
 | <a name="input_sns_topic_name"></a> [sns\_topic\_name](#input\_sns\_topic\_name) | The name of the SNS topic to create | `string` | n/a | yes |

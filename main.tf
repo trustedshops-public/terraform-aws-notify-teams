@@ -91,9 +91,6 @@ module "lambda" {
 
   environment_variables = {
     TEAMS_WEBHOOK_URL = var.teams_webhook_url
-    TEAMS_CHANNEL     = var.teams_channel
-    TEAMS_USERNAME    = var.teams_username
-    TEAMS_EMOJI       = var.teams_emoji
     LOG_EVENTS        = var.log_events ? "True" : "False"
   }
 

@@ -3,17 +3,17 @@ provider "aws" {
 }
 
 resource "aws_kms_key" "this" {
-  description = "KMS key for notify-slack test"
+  description = "KMS key for notify-teams test"
 }
 
 # Encrypt the URL, storing encryption here will show it in logs and in tfstate
 # https://www.terraform.io/docs/state/sensitive-data.html
-resource "aws_kms_ciphertext" "slack_url" {
-  plaintext = "https://hooks.slack.com/services/AAA/BBB/CCC"
+resource "aws_kms_ciphertext" "teams_url" {
+  plaintext = "<YOUR WEBHOOK>"
   key_id    = aws_kms_key.this.arn
 }
 
-module "notify_slack" {
+module "notify_teams" {
   source = "../../"
 
   for_each = toset([
@@ -22,17 +22,15 @@ module "notify_slack" {
     "test",
   ])
 
-  sns_topic_name = "slack-topic"
+  sns_topic_name = "teams-topic"
 
-  lambda_function_name = "notify_slack_${each.value}"
+  lambda_function_name = "notify_teams_${each.value}"
 
-  slack_webhook_url = aws_kms_ciphertext.slack_url.ciphertext_blob
-  slack_channel     = "aws-notification"
-  slack_username    = "reporter"
+  teams_webhook_url = aws_kms_ciphertext.teams_url.ciphertext_blob
 
   kms_key_arn = aws_kms_key.this.arn
 
-  lambda_description = "Lambda function which sends notifications to Slack"
+  lambda_description = "Lambda function which sends notifications to Teams"
   log_events         = true
 
   # VPC
@@ -40,12 +38,12 @@ module "notify_slack" {
   #  lambda_function_vpc_security_group_ids = [module.vpc.default_security_group_id]
 
   tags = {
-    Name = "cloudwatch-alerts-to-slack"
+    Name = "cloudwatch-alerts-to-teams"
   }
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
-  alarm_name          = "NotifySlackDuration"
+  alarm_name          = "NotifyTeamsDuration"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "Duration"
@@ -53,12 +51,12 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
   period              = "60"
   statistic           = "Average"
   threshold           = "5000"
-  alarm_description   = "Duration of notifying slack exceeds threshold"
+  alarm_description   = "Duration of notifying teams exceeds threshold"
 
-  alarm_actions = [module.notify_slack["develop"].this_slack_topic_arn]
+  alarm_actions = [module.notify_teams["develop"].this_teams_topic_arn]
 
   dimensions = {
-    FunctionName = module.notify_slack["develop"].notify_slack_lambda_function_name
+    FunctionName = module.notify_teams["develop"].notify_teams_lambda_function_name
   }
 }
 

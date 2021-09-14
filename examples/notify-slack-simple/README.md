@@ -1,7 +1,7 @@
-Basic Slack notification
+Basic Teams notification
 ========================
 
-Configuration in this directory creates an SNS topic that sends messages to a Slack channel.
+Configuration in this directory creates an SNS topic that sends messages to a Teams channel.
 
 Note, this example does not use KMS key.
 
@@ -36,7 +36,7 @@ Note that this example may create resources which can cost money (AWS Elastic IP
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_notify_slack"></a> [notify\_slack](#module\_notify\_slack) | ../../ |  |
+| <a name="module_notify_teams"></a> [notify\_teams](#module\_notify\_teams) | ../../ |  |
 
 ## Resources
 
@@ -55,10 +55,10 @@ No inputs.
 | <a name="output_lambda_cloudwatch_log_group_arn"></a> [lambda\_cloudwatch\_log\_group\_arn](#output\_lambda\_cloudwatch\_log\_group\_arn) | The Amazon Resource Name (ARN) specifying the log group |
 | <a name="output_lambda_iam_role_arn"></a> [lambda\_iam\_role\_arn](#output\_lambda\_iam\_role\_arn) | The ARN of the IAM role used by Lambda function |
 | <a name="output_lambda_iam_role_name"></a> [lambda\_iam\_role\_name](#output\_lambda\_iam\_role\_name) | The name of the IAM role used by Lambda function |
-| <a name="output_notify_slack_lambda_function_arn"></a> [notify\_slack\_lambda\_function\_arn](#output\_notify\_slack\_lambda\_function\_arn) | The ARN of the Lambda function |
-| <a name="output_notify_slack_lambda_function_invoke_arn"></a> [notify\_slack\_lambda\_function\_invoke\_arn](#output\_notify\_slack\_lambda\_function\_invoke\_arn) | The ARN to be used for invoking Lambda function from API Gateway |
-| <a name="output_notify_slack_lambda_function_last_modified"></a> [notify\_slack\_lambda\_function\_last\_modified](#output\_notify\_slack\_lambda\_function\_last\_modified) | The date Lambda function was last modified |
-| <a name="output_notify_slack_lambda_function_name"></a> [notify\_slack\_lambda\_function\_name](#output\_notify\_slack\_lambda\_function\_name) | The name of the Lambda function |
-| <a name="output_notify_slack_lambda_function_version"></a> [notify\_slack\_lambda\_function\_version](#output\_notify\_slack\_lambda\_function\_version) | Latest published version of your Lambda function |
-| <a name="output_this_sns_topic_arn"></a> [this\_sns\_topic\_arn](#output\_this\_sns\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Slack |
+| <a name="output_notify_teams_lambda_function_arn"></a> [notify\_teams\_lambda\_function\_arn](#output\_notify\_teams\_lambda\_function\_arn) | The ARN of the Lambda function |
+| <a name="output_notify_teams_lambda_function_invoke_arn"></a> [notify\_teams\_lambda\_function\_invoke\_arn](#output\_notify\_teams\_lambda\_function\_invoke\_arn) | The ARN to be used for invoking Lambda function from API Gateway |
+| <a name="output_notify_teams_lambda_function_last_modified"></a> [notify\_teams\_lambda\_function\_last\_modified](#output\_notify\_teams\_lambda\_function\_last\_modified) | The date Lambda function was last modified |
+| <a name="output_notify_teams_lambda_function_name"></a> [notify\_teams\_lambda\_function\_name](#output\_notify\_teams\_lambda\_function\_name) | The name of the Lambda function |
+| <a name="output_notify_teams_lambda_function_version"></a> [notify\_teams\_lambda\_function\_version](#output\_notify\_teams\_lambda\_function\_version) | Latest published version of your Lambda function |
+| <a name="output_this_sns_topic_arn"></a> [this\_sns\_topic\_arn](#output\_this\_sns\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

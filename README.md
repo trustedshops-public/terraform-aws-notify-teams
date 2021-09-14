@@ -1,8 +1,10 @@
-# AWS Notify Slack Terraform module
+# AWS Notify Teams Terraform module
 
-This module creates an SNS topic (or uses an existing one) and an AWS Lambda function that sends notifications to Slack using the [incoming webhooks API](https://api.slack.com/incoming-webhooks).
+This is a replacement for the original [terraform-aws-modules/terraform-aws-notify-slack](https://github.com/terraform-aws-modules/terraform-aws-notify-slack).
 
-Start by setting up an [incoming webhook integration](https://my.slack.com/services/new/incoming-webhook/) in your Slack workspace.
+This module creates an SNS topic (or uses an existing one) and an AWS Lambda function that sends notifications to Teams using the [incoming webhooks API](https://api.teams.com/incoming-webhooks).
+
+Start by setting up an [incoming webhook integration](https://my.teams.com/services/new/incoming-webhook/) in your Teams workspace.
 
 Doing serverless with Terraform? Check out [serverless.tf framework](https://serverless.tf), which aims to simplify all operations when working with the serverless in Terraform.
 
@@ -10,29 +12,27 @@ Doing serverless with Terraform? Check out [serverless.tf framework](https://ser
 
 - AWS Lambda runtime Python 3.8
 - Create new SNS topic or use existing one
-- Support plaintext and encrypted version of Slack webhook URL
-- Most of Slack message options are customizable
+- Support plaintext and encrypted version of Teams webhook URL
+- Most of Teams message options are customizable
 - Support different types of SNS messages:
   - AWS CloudWatch Alarms
   - AWS CloudWatch LogMetrics Alarms
-- Local pytest driven testing of the lambda to a Slack sandbox channel
+- Local pytest driven testing of the lambda to a Teams sandbox channel
 
 ## Feature Roadmap
 
-- More SNS message types: [Send pull-request to add support of other message types](https://github.com/terraform-aws-modules/terraform-aws-notify-slack/pulls)
+- More SNS message types: [Send pull-request to add support of other message types](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/pulls)
 
 ## Usage
 
 ```hcl
-module "notify_slack" {
-  source  = "terraform-aws-modules/notify-slack/aws"
+module "notify_teams" {
+  source  = "https://github.com/trustedshops/terraform-aws-notify-teams"
   version = "~> 4.0"
 
-  sns_topic_name = "slack-topic"
+  sns_topic_name = "teams-topic"
 
-  slack_webhook_url = "https://hooks.slack.com/services/AAA/BBB/CCC"
-  slack_channel     = "aws-notification"
-  slack_username    = "reporter"
+  teams_webhook_url = "<YOUR WEBHOOK>"
 }
 ```
 
@@ -58,21 +58,21 @@ If you want to subscribe the AWS Lambda Function created by this module to an ex
 
 ## Examples
 
-- [notify-slack-simple](https://github.com/terraform-aws-modules/terraform-aws-notify-slack/tree/master/examples/notify-slack-simple) - Creates SNS topic which sends messages to Slack channel.
-- [cloudwatch-alerts-to-slack](https://github.com/terraform-aws-modules/terraform-aws-notify-slack/tree/master/examples/cloudwatch-alerts-to-slack) - End to end example which shows how to send AWS Cloudwatch alerts to Slack channel and use KMS to encrypt webhook URL.
+- [notify-teams-simple](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/examples/notify-teams-simple) - Creates SNS topic which sends messages to Teams channel.
+- [cloudwatch-alerts-to-teams](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/examples/cloudwatch-alerts-to-teams) - End to end example which shows how to send AWS Cloudwatch alerts to Teams channel and use KMS to encrypt webhook URL.
 
 ## Testing with pytest
 
 To run the tests:
 
-1.  Set up a dedicated slack channel as a test sandbox with it's own webhook. See [Slack Incoming Webhooks docs](https://api.slack.com/messaging/webhooks) for details.
+1.  Set up a dedicated teams channel as a test sandbox with it's own webhook. See [Teams Incoming Webhooks docs](https://api.teams.com/messaging/webhooks) for details.
 2.  Make a copy of the sample pytest configuration and edit as needed.
 
         cp functions/pytest.ini.sample functions/pytest.ini
 
 3.  Run the tests:
 
-        pytest functions/notify_slack_test.py
+        pytest functions/notify_teams_test.py
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
@@ -100,7 +100,7 @@ To run the tests:
 |------|------|
 | [aws_cloudwatch_log_group.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_sns_topic.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
-| [aws_sns_topic_subscription.sns_notify_slack](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
+| [aws_sns_topic_subscription.sns_notify_teams](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
@@ -118,9 +118,9 @@ To run the tests:
 | <a name="input_iam_role_boundary_policy_arn"></a> [iam\_role\_boundary\_policy\_arn](#input\_iam\_role\_boundary\_policy\_arn) | The ARN of the policy that is used to set the permissions boundary for the role | `string` | `null` | no |
 | <a name="input_iam_role_name_prefix"></a> [iam\_role\_name\_prefix](#input\_iam\_role\_name\_prefix) | A unique role name beginning with the specified prefix | `string` | `"lambda"` | no |
 | <a name="input_iam_role_tags"></a> [iam\_role\_tags](#input\_iam\_role\_tags) | Additional tags for the IAM role | `map(string)` | `{}` | no |
-| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of the KMS key used for decrypting slack webhook url | `string` | `""` | no |
+| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of the KMS key used for decrypting teams webhook url | `string` | `""` | no |
 | <a name="input_lambda_description"></a> [lambda\_description](#input\_lambda\_description) | The description of the Lambda function | `string` | `null` | no |
-| <a name="input_lambda_function_name"></a> [lambda\_function\_name](#input\_lambda\_function\_name) | The name of the Lambda function to create | `string` | `"notify_slack"` | no |
+| <a name="input_lambda_function_name"></a> [lambda\_function\_name](#input\_lambda\_function\_name) | The name of the Lambda function to create | `string` | `"notify_teams"` | no |
 | <a name="input_lambda_function_s3_bucket"></a> [lambda\_function\_s3\_bucket](#input\_lambda\_function\_s3\_bucket) | S3 bucket to store artifacts | `string` | `null` | no |
 | <a name="input_lambda_function_store_on_s3"></a> [lambda\_function\_store\_on\_s3](#input\_lambda\_function\_store\_on\_s3) | Whether to store produced artifacts on S3 or locally. | `bool` | `false` | no |
 | <a name="input_lambda_function_tags"></a> [lambda\_function\_tags](#input\_lambda\_function\_tags) | Additional tags for the Lambda function | `map(string)` | `{}` | no |
@@ -129,10 +129,10 @@ To run the tests:
 | <a name="input_lambda_role"></a> [lambda\_role](#input\_lambda\_role) | IAM role attached to the Lambda Function.  If this is set then a role will not be created for you. | `string` | `""` | no |
 | <a name="input_log_events"></a> [log\_events](#input\_log\_events) | Boolean flag to enabled/disable logging of incoming events | `bool` | `false` | no |
 | <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | The amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations | `number` | `-1` | no |
-| <a name="input_slack_channel"></a> [slack\_channel](#input\_slack\_channel) | The name of the channel in Slack for notifications | `string` | n/a | yes |
-| <a name="input_slack_emoji"></a> [slack\_emoji](#input\_slack\_emoji) | A custom emoji that will appear on Slack messages | `string` | `":aws:"` | no |
-| <a name="input_slack_username"></a> [slack\_username](#input\_slack\_username) | The username that will appear on Slack messages | `string` | n/a | yes |
-| <a name="input_slack_webhook_url"></a> [slack\_webhook\_url](#input\_slack\_webhook\_url) | The URL of Slack webhook | `string` | n/a | yes |
+| <a name="input_teams_channel"></a> [teams\_channel](#input\_teams\_channel) | The name of the channel in Teams for notifications | `string` | n/a | yes |
+| <a name="input_teams_emoji"></a> [teams\_emoji](#input\_teams\_emoji) | A custom emoji that will appear on Teams messages | `string` | `":aws:"` | no |
+| <a name="input_teams_username"></a> [teams\_username](#input\_teams\_username) | The username that will appear on Teams messages | `string` | n/a | yes |
+| <a name="input_teams_webhook_url"></a> [teams\_webhook\_url](#input\_teams\_webhook\_url) | The URL of Teams webhook | `string` | n/a | yes |
 | <a name="input_sns_topic_kms_key_id"></a> [sns\_topic\_kms\_key\_id](#input\_sns\_topic\_kms\_key\_id) | ARN of the KMS key used for enabling SSE on the topic | `string` | `""` | no |
 | <a name="input_sns_topic_name"></a> [sns\_topic\_name](#input\_sns\_topic\_name) | The name of the SNS topic to create | `string` | n/a | yes |
 | <a name="input_sns_topic_tags"></a> [sns\_topic\_tags](#input\_sns\_topic\_tags) | Additional tags for the SNS topic | `map(string)` | `{}` | no |
@@ -146,18 +146,18 @@ To run the tests:
 | <a name="output_lambda_cloudwatch_log_group_arn"></a> [lambda\_cloudwatch\_log\_group\_arn](#output\_lambda\_cloudwatch\_log\_group\_arn) | The Amazon Resource Name (ARN) specifying the log group |
 | <a name="output_lambda_iam_role_arn"></a> [lambda\_iam\_role\_arn](#output\_lambda\_iam\_role\_arn) | The ARN of the IAM role used by Lambda function |
 | <a name="output_lambda_iam_role_name"></a> [lambda\_iam\_role\_name](#output\_lambda\_iam\_role\_name) | The name of the IAM role used by Lambda function |
-| <a name="output_notify_slack_lambda_function_arn"></a> [notify\_slack\_lambda\_function\_arn](#output\_notify\_slack\_lambda\_function\_arn) | The ARN of the Lambda function |
-| <a name="output_notify_slack_lambda_function_invoke_arn"></a> [notify\_slack\_lambda\_function\_invoke\_arn](#output\_notify\_slack\_lambda\_function\_invoke\_arn) | The ARN to be used for invoking Lambda function from API Gateway |
-| <a name="output_notify_slack_lambda_function_last_modified"></a> [notify\_slack\_lambda\_function\_last\_modified](#output\_notify\_slack\_lambda\_function\_last\_modified) | The date Lambda function was last modified |
-| <a name="output_notify_slack_lambda_function_name"></a> [notify\_slack\_lambda\_function\_name](#output\_notify\_slack\_lambda\_function\_name) | The name of the Lambda function |
-| <a name="output_notify_slack_lambda_function_version"></a> [notify\_slack\_lambda\_function\_version](#output\_notify\_slack\_lambda\_function\_version) | Latest published version of your Lambda function |
-| <a name="output_this_slack_topic_arn"></a> [this\_slack\_topic\_arn](#output\_this\_slack\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Slack |
+| <a name="output_notify_teams_lambda_function_arn"></a> [notify\_teams\_lambda\_function\_arn](#output\_notify\_teams\_lambda\_function\_arn) | The ARN of the Lambda function |
+| <a name="output_notify_teams_lambda_function_invoke_arn"></a> [notify\_teams\_lambda\_function\_invoke\_arn](#output\_notify\_teams\_lambda\_function\_invoke\_arn) | The ARN to be used for invoking Lambda function from API Gateway |
+| <a name="output_notify_teams_lambda_function_last_modified"></a> [notify\_teams\_lambda\_function\_last\_modified](#output\_notify\_teams\_lambda\_function\_last\_modified) | The date Lambda function was last modified |
+| <a name="output_notify_teams_lambda_function_name"></a> [notify\_teams\_lambda\_function\_name](#output\_notify\_teams\_lambda\_function\_name) | The name of the Lambda function |
+| <a name="output_notify_teams_lambda_function_version"></a> [notify\_teams\_lambda\_function\_version](#output\_notify\_teams\_lambda\_function\_version) | Latest published version of your Lambda function |
+| <a name="output_this_teams_topic_arn"></a> [this\_teams\_topic\_arn](#output\_this\_teams\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
 ## Authors
 
-Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-notify-slack/graphs/contributors).
+Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/graphs/contributors).
 
 ## License
 
-Apache 2 Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-aws-notify-slack/tree/master/LICENSE) for full details.
+Apache 2 Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/LICENSE) for full details.

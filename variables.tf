@@ -19,7 +19,7 @@ variable "lambda_role" {
 variable "lambda_function_name" {
   description = "The name of the Lambda function to create"
   type        = string
-  default     = "notify_slack"
+  default     = "notify_teams"
 }
 
 variable "lambda_description" {
@@ -39,29 +39,13 @@ variable "sns_topic_kms_key_id" {
   default     = ""
 }
 
-variable "slack_webhook_url" {
-  description = "The URL of Slack webhook"
+variable "teams_webhook_url" {
+  description = "The URL of Teams webhook"
   type        = string
-}
-
-variable "slack_channel" {
-  description = "The name of the channel in Slack for notifications"
-  type        = string
-}
-
-variable "slack_username" {
-  description = "The username that will appear on Slack messages"
-  type        = string
-}
-
-variable "slack_emoji" {
-  description = "A custom emoji that will appear on Slack messages"
-  type        = string
-  default     = ":aws:"
 }
 
 variable "kms_key_arn" {
-  description = "ARN of the KMS key used for decrypting slack webhook url"
+  description = "ARN of the KMS key used for decrypting teams webhook url"
   type        = string
   default     = ""
 }

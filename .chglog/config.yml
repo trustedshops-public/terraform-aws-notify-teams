@@ -2,7 +2,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/terraform-aws-modules/terraform-aws-notify-slack
+  repository_url: https://github.com/trustedshops/terraform-aws-notify-teams
 options:
   header:
     pattern: "^(.*)$"

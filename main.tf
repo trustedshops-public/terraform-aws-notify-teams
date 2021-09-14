@@ -61,7 +61,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
   tags = merge(var.tags, var.cloudwatch_log_group_tags)
 }
 
-resource "aws_sns_topic_subscription" "sns_notify_slack" {
+resource "aws_sns_topic_subscription" "sns_notify_teams" {
   count = var.create ? 1 : 0
 
   topic_arn     = local.sns_topic_arn
@@ -79,21 +79,21 @@ module "lambda" {
   function_name = var.lambda_function_name
   description   = var.lambda_description
 
-  handler                        = "notify_slack.lambda_handler"
-  source_path                    = "${path.module}/functions/notify_slack.py"
+  handler                        = "notify_teams.lambda_handler"
+  source_path                    = "${path.module}/functions/notify_teams.py"
   runtime                        = "python3.8"
   timeout                        = 30
   kms_key_arn                    = var.kms_key_arn
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
-  # If publish is disabled, there will be "Error adding new Lambda Permission for notify_slack: InvalidParameterValueException: We currently do not support adding policies for $LATEST."
+  # If publish is disabled, there will be "Error adding new Lambda Permission for notify_teams: InvalidParameterValueException: We currently do not support adding policies for $LATEST."
   publish = true
 
   environment_variables = {
-    SLACK_WEBHOOK_URL = var.slack_webhook_url
-    SLACK_CHANNEL     = var.slack_channel
-    SLACK_USERNAME    = var.slack_username
-    SLACK_EMOJI       = var.slack_emoji
+    TEAMS_WEBHOOK_URL = var.teams_webhook_url
+    TEAMS_CHANNEL     = var.teams_channel
+    TEAMS_USERNAME    = var.teams_username
+    TEAMS_EMOJI       = var.teams_emoji
     LOG_EVENTS        = var.log_events ? "True" : "False"
   }
 

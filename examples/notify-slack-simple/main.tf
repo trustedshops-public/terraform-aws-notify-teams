@@ -6,18 +6,16 @@ resource "aws_sns_topic" "my_sns" {
   name = "my-sns"
 }
 
-module "notify_slack" {
+module "notify_teams" {
   source = "../../"
 
   sns_topic_name   = aws_sns_topic.my_sns.name
   create_sns_topic = false
 
-  slack_webhook_url = "https://hooks.slack.com/services/AAA/BBB/CCC"
-  slack_channel     = "aws-notification"
-  slack_username    = "reporter"
+  teams_webhook_url = "<YOUR WEBHOOK>"
 
   tags = {
-    Name = "notify-slack-simple"
+    Name = "notify-teams-simple"
   }
 
   depends_on = [aws_sns_topic.my_sns]

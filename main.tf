@@ -79,8 +79,14 @@ module "lambda" {
   function_name = var.lambda_function_name
   description   = var.lambda_description
 
-  handler                        = "notify_teams.lambda_handler"
-  source_path                    = "${path.module}/functions/notify_teams.py"
+  handler = "notify_teams.lambda_handler"
+  source_path = [
+    "${path.module}/functions/notify_teams.py",
+    {
+      path             = "${path.module}/functions"
+      pip_requirements = true
+    }
+  ]
   runtime                        = "python3.8"
   timeout                        = 30
   kms_key_arn                    = var.kms_key_arn

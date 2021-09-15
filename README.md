@@ -152,7 +152,7 @@ To run the tests:
 
 ## Authors
 
-Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/graphs/contributors).
+The source module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/graphs/contributors).
 
 ## License
 

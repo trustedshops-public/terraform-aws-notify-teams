@@ -14,7 +14,7 @@ import re
 import urllib.parse
 import urllib.request
 from enum import Enum
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import boto3
 import pymsteams
@@ -57,7 +57,7 @@ def decrypt_url(encrypted_url: str) -> str:
         return ""
 
 
-def get_account_info() -> (str, str):
+def get_account_info() -> Tuple[str, str]:
     """
     Gather Account details
     :returns: AWS Account Details
@@ -271,7 +271,7 @@ def get_teams_message_payload(
     :returns: Teams message payload
     """
 
-    payload = {}
+    payload: Dict[str, Any] = dict()
     attachment = None
 
     if not message:
@@ -333,11 +333,12 @@ def _find_url_in_string(url: str) -> str:
     """
     # findall() has been used
     # with valid conditions for urls in string
-    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2," \
-            r"4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([" \
-            r"^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’])) "
-    url = re.findall(regex, url)
-    result = [x[0] for x in url]
+    regex = (
+        r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,"
+        r"4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\((["
+        r"^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’])) "
+    )
+    result = [x[0] for x in re.findall(regex, url)]
     return result[0] if result else None
 
 

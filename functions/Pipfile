@@ -32,7 +32,6 @@ lint = "python3 -m flake8 . --count --statistics --benchmark --exit-zero --confi
 'lint:ci' = "python3 -m flake8 . --config=.flake8"
 imports = "python3 -m isort . --profile black"
 format = "python3 -m black ."
-requirements = "pipenv lock -r > requirements.txt"
 
 [pipenv]
 allow_prereleases = true

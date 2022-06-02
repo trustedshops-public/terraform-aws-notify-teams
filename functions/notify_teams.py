@@ -323,7 +323,7 @@ def send_teams_notification(teams_message: pymsteams.connectorcard) -> str:
     return json.dumps({"code": response})
 
 
-def _find_url_in_string(url: str) -> [str]:
+def _find_url_in_string(url: str) -> str:
     """
     Checks if a url is in a string
 
@@ -337,7 +337,8 @@ def _find_url_in_string(url: str) -> [str]:
             r"4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([" \
             r"^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’])) "
     url = re.findall(regex, url)
-    return [x[0] for x in url]
+    result = [x[0] for x in url]
+    return result[0] if result else None
 
 
 def _create_section(payload: Dict[str, Any]) -> pymsteams.cardsection:
@@ -350,11 +351,10 @@ def _create_section(payload: Dict[str, Any]) -> pymsteams.cardsection:
     section = pymsteams.cardsection()
     for index, field in enumerate(payload["fields"]):
         if "title" in field and "value" in field:
-            urls = _find_url_in_string(field["value"])
-            if len(urls) > 0:
-                for url in urls:
-                    section.addFact(field["title"], field["value"])
-                    section.linkButton(field["title"], url)
+            url = _find_url_in_string(field["value"])
+            if url:
+                section.addFact(field["title"], field["value"])
+                section.linkButton(field["title"], url)
             else:
                 section.addFact(field["title"], field["value"])
         elif "value" in field:

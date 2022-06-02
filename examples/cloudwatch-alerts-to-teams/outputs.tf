@@ -1,6 +1,6 @@
-output "this_sns_topic_arn" {
+output "sns_topic_arn" {
   description = "The ARN of the SNS topic from which messages will be sent to Teams"
-  value       = module.notify_teams["develop"].this_teams_topic_arn
+  value       = module.notify_teams["develop"].teams_topic_arn
 }
 
 output "lambda_iam_role_arn" {

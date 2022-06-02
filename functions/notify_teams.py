@@ -1,225 +1,435 @@
-from __future__ import print_function
-from urllib.error import HTTPError
+# -*- coding: utf-8 -*-
+"""
+    Notify Teams
+    ------------
 
-import pymsteams
+    Receives event payloads that are parsed and sent to Teams
 
-import re
-import os
-import boto3
-import json
+"""
 import base64
-import urllib.request
-import urllib.parse
+from distutils.log import debug
+import json
 import logging
+import os
+import re
+import urllib.parse
+import urllib.request
+from enum import Enum
+from typing import Any, Dict, Optional, Union, cast
+
+import sys
+import boto3
+import pymsteams
+from botocore.exceptions import NoCredentialsError
+
+# Set default region if not provided
+REGION = os.environ.get("AWS_REGION", "eu-central-1")
+
+# Create client so its cached/frozen between invocations
+KMS_CLIENT = boto3.client("kms", region_name=REGION)
+
+logging.basicConfig(
+    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+log = logging.getLogger(__name__)
 
 
-def decrypt(encrypted_url):
-    region = os.environ['AWS_REGION']
+class AwsService(Enum):
+    """AWS service supported by function"""
+
+    cloudwatch = "cloudwatch"
+    guardduty = "guardduty"
+
+
+def decrypt_url(encrypted_url: str) -> str:
+    """
+    Decrypt encrypted URL with KMS
+
+      :param encrypted_url: URL to decrypt with KMS
+      :returns: plaintext URL
+    """
     try:
-        kms = boto3.client('kms', region_name=region)
-        plaintext = kms.decrypt(CiphertextBlob=base64.b64decode(encrypted_url))[
-            'Plaintext']
-        return plaintext.decode()
+        decrypted_payload = KMS_CLIENT.decrypt(
+            CiphertextBlob=base64.b64decode(encrypted_url)
+        )
+        return decrypted_payload["Plaintext"].decode()
     except Exception:
-        logging.exception("Failed to decrypt URL with KMS")
+        log.exception("Failed to decrypt URL with KMS")
+        return ""
 
 
-def cloudwatch_notification(message, region):
-    states = {'OK': 'green', 'INSUFFICIENT_DATA': 'yellow', 'ALARM': 'red'}
-    if region.startswith("us-gov-"):
-        cloudwatch_url = "https://console.amazonaws-us-gov.com/cloudwatch/home?region="
-    else:
-        cloudwatch_url = "https://console.aws.amazon.com/cloudwatch/home?region="
+def find_url_in_string(url: str) -> [str]:
+    """
+    Checks if a url is in a string
+
+    :params url: possible url in string
+    :returns: if found the Array of str containing the url otherwise
+    an empty Array
+    """
+    # findall() has been used
+    # with valid conditions for urls in string
+    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+    url = re.findall(regex, url)
+    return [x[0] for x in url]
+
+
+def get_account_info() -> (str, str):
+    """
+    Gather Account details
+    :returns: AWS Account Details
+    """
+    account_id = "Not Found"
+    alias = "Not Found"
+    try:
+        account_id = boto3.client("sts").get_caller_identity().get("Account")
+        alias = boto3.client("iam").list_account_aliases()["AccountAliases"][0]
+    except NoCredentialsError:
+        log.error("Could not determine Account details")
+    return account_id, alias
+
+
+def get_service_url(region: str, service: str) -> str:
+    """
+    Get the appropriate service URL for the region
+
+      :param region: name of the AWS region
+      :param service: name of the AWS service
+      :returns: AWS console url formatted for the region and service provided
+    """
+    try:
+        service_name = AwsService[service].value
+        if region.startswith("us-gov-"):
+            return f"https://console.amazonaws-us-gov.com/{service_name}/home?region={region}"
+        else:
+            return f"https://console.aws.amazon.com/{service_name}/home?region={region}"
+
+    except KeyError:
+        log.error(f"Service {service} is currently not supported")
+        raise
+
+
+class CloudWatchAlarmState(Enum):
+    """Maps CloudWatch notification state to Teams message format color"""
+
+    # {
+    #  "red": "FF0000",
+    #  "green": "00FF00",
+    #  "blue": "0000FF",
+    #  "yellow": "FFFF00"
+    #  }
+    OK = "00FF00"
+    INSUFFICIENT_DATA = "0000FF"
+    ALARM = "FF0000"
+
+
+def format_cloudwatch_alarm(message: Dict[str, Any], region: str) -> Dict[str, Any]:
+    """
+    Format CloudWatch alarm event into Teams message format
+
+      :params message: SNS message body containing CloudWatch alarm event
+      :region: AWS region where the event originated from
+      :returns: formatted Teams message payload
+    """
+
+    cloudwatch_url = get_service_url(region=region, service="cloudwatch")
+    alarm_name = message["AlarmName"]
 
     return {
-        "color": states[message['NewStateValue']],
-        "fallback": "Alarm {} triggered".format(message['AlarmName']),
+        "color": CloudWatchAlarmState[message["NewStateValue"]].value,
+        "fallback": f"Alarm {alarm_name} triggered",
         "fields": [
-            {"title": "Alarm Name",
-                "value": message['AlarmName'], "short": True},
-            {"title": "Alarm Description",
-                "value": message['AlarmDescription'], "short": False},
-            {"title": "Alarm reason",
-                "value": message['NewStateReason'], "short": False},
-            {"title": "Old State",
-                "value": message['OldStateValue'], "short": True},
-            {"title": "Current State",
-                "value": message['NewStateValue'], "short": True},
+            {"title": "Alarm Name", "value": f"`{alarm_name}`", "short": True},
+            {
+                "title": "Alarm Description",
+                "value": f"`{message['AlarmDescription']}`",
+                "short": False,
+            },
+            {
+                "title": "Alarm reason",
+                "value": f"`{message['NewStateReason']}`",
+                "short": False,
+            },
+            {
+                "title": "Old State",
+                "value": f"`{message['OldStateValue']}`",
+                "short": True,
+            },
+            {
+                "title": "Current State",
+                "value": f"`{message['NewStateValue']}`",
+                "short": True,
+            },
             {
                 "title": "Link to Alarm",
-                "value": cloudwatch_url + region + "#alarm:alarmFilter=ANY;name=" + urllib.parse.quote(message['AlarmName']),
-                "short": False
-            }
-        ]
+                "value": f"{cloudwatch_url}#alarm:alarmFilter=ANY;name={urllib.parse.quote(alarm_name)}",
+                "short": False,
+            },
+        ],
+        "text": f"AWS CloudWatch notification - {message['AlarmName']}",
     }
 
 
-def default_notification(subject, message):
+class GuardDutyFindingSeverity(Enum):
+    """Maps GuardDuty finding severity to Teams message format color"""
+
+    # {
+    #  "red": "FF0000",
+    #  "green": "00FF00",
+    #  "blue": "0000FF",
+    #  "yellow": "FFFF00"
+    #  }
+    Low = "#777777"
+    Medium = "FFFF00"
+    High = "FF0000"
+
+
+def format_guardduty_finding(message: Dict[str, Any], region: str) -> Dict[str, Any]:
+    """
+    Format GuardDuty finding event into Teams message format
+
+    :params message: SNS message body containing GuardDuty finding event
+    :params region: AWS region where the event originated from
+    :returns: formatted Teams message payload
+    """
+
+    guardduty_url = get_service_url(region=region, service="guardduty")
+    detail = message["detail"]
+    service = detail.get("service", {})
+    severity_score = detail.get("severity")
+
+    if severity_score < 4.0:
+        severity = "Low"
+    elif severity_score < 7.0:
+        severity = "Medium"
+    else:
+        severity = "High"
+
+    return {
+        "color": GuardDutyFindingSeverity[severity].value,
+        "fallback": f"GuardDuty Finding: {detail.get('title')}",
+        "fields": [
+            {
+                "title": "Description",
+                "value": f"`{detail['description']}`",
+                "short": False,
+            },
+            {
+                "title": "Finding Type",
+                "value": f"`{detail['type']}`",
+                "short": False,
+            },
+            {
+                "title": "First Seen",
+                "value": f"`{service['eventFirstSeen']}`",
+                "short": True,
+            },
+            {
+                "title": "Last Seen",
+                "value": f"`{service['eventLastSeen']}`",
+                "short": True,
+            },
+            {"title": "Severity", "value": f"`{severity}`", "short": True},
+            {
+                "title": "Count",
+                "value": f"`{service['count']}`",
+                "short": True,
+            },
+            {
+                "title": "Link to Finding",
+                "value": f"{guardduty_url}#/findings?search=id%3D{detail['id']}",
+                "short": False,
+            },
+        ],
+        "text": f"AWS GuardDuty Finding - {detail.get('title')}",
+    }
+
+
+def format_default(
+    message: Union[str, Dict], subject: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Default formatter, converting event into Teams message format
+
+    :params message: SNS message body containing message/event
+    :returns: formatted Teams message payload
+    """
+
     attachments = {
         "fallback": "A new message",
+        "text": "AWS notification",
         "title": subject if subject else "Message",
         "mrkdwn_in": ["value"],
-        "fields": []
     }
+    fields = []
+
     if type(message) is dict:
         for k, v in message.items():
-            value = f"`{json.dumps(v)}`" if isinstance(
-                v, (dict, list)) else str(v)
-            attachments['fields'].append(
-                {
-                    "title": k,
-                    "value": value,
-                    "short": len(value) < 25
-                }
-            )
+            value = f"{json.dumps(v)}" if isinstance(v, (dict, list)) else str(v)
+            fields.append({"title": k, "value": f"`{value}`", "short": len(value) < 25})
     else:
-        attachments['fields'].append({"value": message, "short": False})
+        fields.append({"value": message, "short": False})
+
+    if fields:
+        attachments["fields"] = fields  # type: ignore
 
     return attachments
 
 
-def FindURL(string):
-    # findall() has been used
-    # with valid conditions for urls in string
-    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
-    url = re.findall(regex, string)
-    return [x[0] for x in url]
+def get_teams_message_payload(
+    message: Union[str, Dict], region: str, subject: Optional[str] = None
+) -> Dict:
+    """
+    Parse notification message and format into Teams message payload
 
+    :params message: SNS message body notification payload
+    :params region: AWS region where the event originated from
+    :params subject: Optional subject line for Teams notification
+    :returns: Teams message payload
+    """
 
-def notify_teams(subject, message, region):
-    colors = {"red": "FF0000", "green": "00FF00",
-              "blue": "0000FF", "yellow": "FFFF00"}
-    teams_url = os.environ['TEAMS_WEBHOOK_URL']
-    if not teams_url.startswith("http"):
-        teams_url = decrypt(teams_url)
+    payload = {}
+    attachment = None
 
-    if type(message) is str:
+    if not message:
+        raise KeyError
+
+    if isinstance(message, str):
         try:
             message = json.loads(message)
-        except json.JSONDecodeError as err:
-            logging.exception(f'JSON decode error: {err}')
+        except json.JSONDecodeError:
+            log.debug("Not a structured payload, just a string message")
 
-    payload = {
-        "attachments": []
-    }
-    notification = {}
+    message = cast(Dict[str, Any], message)
 
     if "AlarmName" in message:
-        notification = cloudwatch_notification(message, region)
-        payload['text'] = "AWS CloudWatch notification - " + \
-            message["AlarmName"]
+        notification = format_cloudwatch_alarm(message=message, region=region)
+        attachment = notification
+
+    elif (
+        isinstance(message, Dict) and message.get("detail-type") == "GuardDuty Finding"
+    ):
+        notification = format_guardduty_finding(
+            message=message, region=message["region"]
+        )
+        attachment = notification
+
     elif "attachments" in message or "text" in message:
         payload = {**payload, **message}
+
     else:
-        notification = default_notification(subject, message)
-        payload['text'] = "AWS Notification"
+        attachment = format_default(message=message, subject=subject)
 
-    print(payload)
-    print(notification)
-    teams_message = pymsteams.connectorcard(teams_url)
+    if attachment:
+        payload["attachments"] = [attachment]  # type: ignore
 
-    summary = payload
-    summary["notification"] = notification
-    teams_message.summary(json.dumps(summary))
+    return payload
 
-    if "color" in notification:
-        teams_message.color(colors[notification["color"]])
-    else:
-        teams_message.color(colors["blue"])
+
+def send_teams_notification(teams_message: pymsteams.connectorcard) -> str:
+    """
+    Send notification payload to Teams
+
+    :params teams_message: formatted Teams message payload
+    :returns: response details from sending notification
+    """
+    teams_url = os.environ["TEAMS_WEBHOOK_URL"]
+    teams_message.newhookurl(teams_url)
+    teams_message.send()
+    response = teams_message.last_http_response.status_code
+    return json.dumps({"code": response})
+
+
+def get_teams_message_strucuture(payload: Dict[str, Any]) -> pymsteams.connectorcard:
+    """
+    Create from structured payload teams specific payload
+
+    :params payload: generally formatted payload
+    :returns: teams message payload
+    """
+    result = pymsteams.connectorcard(None)
+    account_info = pymsteams.cardsection()
+    # account_info.disableMarkdown()
+    account_id, alias = get_account_info()
+    account_info.addFact("Account ID", account_id)
+    account_info.addFact("Account Alias", alias)
+    result.addSection(account_info)
+    if "color" in payload:
+        result.color(payload["color"])
+    if "fallback" in payload:
+        result.summary(payload["fallback"])
     if "text" in payload:
-        teams_message.title(payload["text"])
-    else:
-        teams_message.title("AWS Notification")
-
-    if notification == {}:
+        result.text(payload["text"])
+    if "title" in payload:
+        result.title(payload["title"])
+    if "fields" in payload:
         section = pymsteams.cardsection()
-        section.title("Notification")
-        section.text("No data provided")
-        teams_message.addSection(section)
-    elif "fields" in notification:
-        section = pymsteams.cardsection()
-        section.title("Notification")
-        for index, field in enumerate(notification["fields"]):
+        # section.disableMarkdown()
+        for index, field in enumerate(payload["fields"]):
             if "title" in field and "value" in field:
-                urls = FindURL(field["value"])
+                urls = find_url_in_string(field["value"])
                 if len(urls) > 0:
                     for url in urls:
                         section.addFact(field["title"], field["value"])
-                        teams_message.addLinkButton(field["title"], url)
+                        section.linkButton(field["title"], url)
                 else:
                     section.addFact(field["title"], field["value"])
             elif "value" in field:
-                section.addFact("Message #{:02d}".format(
-                    index+1), field["value"])
-        teams_message.addSection(section)
+                section.addFact("Message #{:02d}".format(index + 1), field["value"])
+        result.addSection(section)
+    return result
+
+
+def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:
+    """
+    Lambda function to parse notification events and forward to Teams
+
+    :param event: lambda expected event object
+    :param context: lambda expected context object
+    :returns: none
+    """
+    # Level	Numeric value
+    # CRITICAL	50
+    # ERROR	    40
+    # WARNING	30
+    # INFO	    20
+    # DEBUG	    10
+    # NOTSET	0
+    if os.environ.get("DEBUG", "False") == "True":
+        log.setLevel(level=10)
     else:
-        section = pymsteams.cardsection()
-        section.title("Notification")
-        teams_message.text(notification)
-        teams_message.addSection(section)
+        log.setLevel(level=20)
 
-    if "attachments" in payload:
-        for index, attachment in enumerate(payload["attachments"]):
-            section = pymsteams.cardsection()
-            if "title" in attachment:
-                section.title("Attachement - {}".format(attachment['title']))
-            else:
-                section.title("Attachement - {:02d}".format(index))
-            if "pretext" in attachment:
-                section.text(attachment["pretext"])
-            if "author_name" in attachment:
-                section.addFact("Author Name", attachment["author_name"])
-            if "author_link" in attachment:
-                section.addFact("Author Link", attachment["author_link"])
-            if "author_icon" in attachment:
-                section.addFact("Author Icon", attachment["author_icon"])
-                section.addImage(attachment["author_icon"])
-            if "title_link" in attachment:
-                section.addFact("Title Link", attachment["title_link"])
-            if "text" in attachment:
-                section.addFact("Text", attachment["text"])
-            if "thumb_url" in attachment:
-                section.addFact("Thumb URL", attachment["thumb_url"])
-                section.addImage(attachment["thumb_url"])
-            if "footer" in attachment:
-                section.addFact("Footer", attachment["thumb_url"])
-            if "footer_icon" in attachment:
-                section.addFact("Footer Icon", attachment["footer_icon"])
-                section.addImage(attachment["footer_icon"])
-            if "ts" in attachment:
-                section.addFact("TS", attachment["ts"])
-            if "fields" in attachment:
-                for index, field in enumerate(attachment["fields"]):
-                    if "title" in field and "value" in field:
-                        urls = FindURL(field["value"])
-                        if len(urls) > 0:
-                            for url in urls:
-                                teams_message.addLinkButton(
-                                    field["title"], url)
-                        else:
-                            section.addFact(field["title"], field["value"])
-                    elif "value" in field:
-                        section.addFact("Message #{:02d}".format(
-                            index+1), field["value"])
-            teams_message.addSection(section)
+    if os.environ.get("LOG_EVENTS", "False") == "True":
+        log.info(f"Event logging enabled: `{json.dumps(event)}`")
 
-    teams_message.send()
-    response = json.dumps({"code": teams_message.last_http_status.status_code})
-    return response
+    responses = list(dict())
 
+    for record in event["Records"]:
+        sns = record["Sns"]
+        subject = sns["Subject"]
+        message = sns["Message"]
+        region = sns["TopicArn"].split(":")[3]
 
-def lambda_handler(event, context):
-    if 'LOG_EVENTS' in os.environ and os.environ['LOG_EVENTS'] == 'True':
-        logging.warning(
-            'Event logging enabled: `{}`'.format(json.dumps(event)))
+        payload = get_teams_message_payload(
+            message=message, region=region, subject=subject
+        )
 
-    subject = event['Records'][0]['Sns']['Subject']
-    message = event['Records'][0]['Sns']['Message']
-    region = event['Records'][0]['Sns']['TopicArn'].split(":")[3]
-    response = notify_teams(subject, message, region)
+        log.debug(f"{payload}")
 
-    if json.loads(response)["code"] != 200:
-        logging.error("Error: received status `{}` using event `{}` and context `{}`".format(
-            json.loads(response)["info"], event, context))
+        for attachment in payload["attachments"]:
+            teams_message = get_teams_message_strucuture(payload=attachment)
+            response = send_teams_notification(teams_message=teams_message)
+            responses.append(response)
 
-    return response
+            log.debug(f"{response=}")
+
+            if json.loads(response)["code"] != 200:
+                response_info = json.loads(response)["info"]
+                log.error(
+                    f"Error: received status `{response_info}` using event `{event}` and context `{context}`"
+                )
+
+    log.debug(f"{responses=}")
+
+    return ", ".join(responses)

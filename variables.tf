@@ -28,6 +28,12 @@ variable "lambda_description" {
   default     = null
 }
 
+variable "lambda_debug" {
+  description = "Enabled debug outputs"
+  type        = bool
+  default     = false
+}
+
 variable "sns_topic_name" {
   description = "The name of the SNS topic to create"
   type        = string
@@ -48,6 +54,12 @@ variable "kms_key_arn" {
   description = "ARN of the KMS key used for decrypting teams webhook url"
   type        = string
   default     = ""
+}
+
+variable "recreate_missing_package" {
+  description = "Whether to recreate missing Lambda package if it is missing locally or not"
+  type        = bool
+  default     = true
 }
 
 variable "log_events" {
@@ -98,6 +110,18 @@ variable "iam_role_name_prefix" {
   default     = "lambda"
 }
 
+variable "iam_role_path" {
+  description = "Path of IAM role to use for Lambda Function"
+  type        = string
+  default     = null
+}
+
+variable "iam_policy_path" {
+  description = "Path of policies to that should be added to IAM role for Lambda Function"
+  type        = string
+  default     = null
+}
+
 variable "lambda_function_tags" {
   description = "Additional tags for the Lambda function"
   type        = map(string)
@@ -126,6 +150,12 @@ variable "lambda_function_s3_bucket" {
   description = "S3 bucket to store artifacts"
   type        = string
   default     = null
+}
+
+variable "lambda_function_ephemeral_storage_size" {
+  description = "Amount of ephemeral storage (/tmp) in MB your Lambda Function can use at runtime. Valid value between 512 MB to 10,240 MB (10 GB)."
+  type        = number
+  default     = 512
 }
 
 variable "sns_topic_tags" {

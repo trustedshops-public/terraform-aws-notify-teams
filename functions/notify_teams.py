@@ -7,7 +7,6 @@
 
 """
 import base64
-from distutils.log import debug
 import json
 import logging
 import os
@@ -17,7 +16,6 @@ import urllib.request
 from enum import Enum
 from typing import Any, Dict, Optional, Union, cast
 
-import sys
 import boto3
 import pymsteams
 from botocore.exceptions import NoCredentialsError
@@ -57,21 +55,6 @@ def decrypt_url(encrypted_url: str) -> str:
     except Exception:
         log.exception("Failed to decrypt URL with KMS")
         return ""
-
-
-def find_url_in_string(url: str) -> [str]:
-    """
-    Checks if a url is in a string
-
-    :params url: possible url in string
-    :returns: if found the Array of str containing the url otherwise
-    an empty Array
-    """
-    # findall() has been used
-    # with valid conditions for urls in string
-    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
-    url = re.findall(regex, url)
-    return [x[0] for x in url]
 
 
 def get_account_info() -> (str, str):
@@ -340,6 +323,43 @@ def send_teams_notification(teams_message: pymsteams.connectorcard) -> str:
     return json.dumps({"code": response})
 
 
+def _find_url_in_string(url: str) -> [str]:
+    """
+    Checks if a url is in a string
+
+    :params url: possible url in string
+    :returns: if found the Array of str containing the url otherwise
+    an empty Array
+    """
+    # findall() has been used
+    # with valid conditions for urls in string
+    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+    url = re.findall(regex, url)
+    return [x[0] for x in url]
+
+
+def _create_section(payload: Dict[str, Any]) -> pymsteams.cardsection:
+    """
+    Create section from payload fields
+
+    :params payload: generally formatted payload
+    :returns: teams section payload
+    """
+    section = pymsteams.cardsection()
+    for index, field in enumerate(payload["fields"]):
+        if "title" in field and "value" in field:
+            urls = _find_url_in_string(field["value"])
+            if len(urls) > 0:
+                for url in urls:
+                    section.addFact(field["title"], field["value"])
+                    section.linkButton(field["title"], url)
+            else:
+                section.addFact(field["title"], field["value"])
+        elif "value" in field:
+            section.addFact("Message #{:02d}".format(index + 1), field["value"])
+    return section
+
+
 def get_teams_message_strucuture(payload: Dict[str, Any]) -> pymsteams.connectorcard:
     """
     Create from structured payload teams specific payload
@@ -363,19 +383,7 @@ def get_teams_message_strucuture(payload: Dict[str, Any]) -> pymsteams.connector
     if "title" in payload:
         result.title(payload["title"])
     if "fields" in payload:
-        section = pymsteams.cardsection()
-        # section.disableMarkdown()
-        for index, field in enumerate(payload["fields"]):
-            if "title" in field and "value" in field:
-                urls = find_url_in_string(field["value"])
-                if len(urls) > 0:
-                    for url in urls:
-                        section.addFact(field["title"], field["value"])
-                        section.linkButton(field["title"], url)
-                else:
-                    section.addFact(field["title"], field["value"])
-            elif "value" in field:
-                section.addFact("Message #{:02d}".format(index + 1), field["value"])
+        section = _create_section(payload)
         result.addSection(section)
     return result
 

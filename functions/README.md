@@ -83,8 +83,6 @@ To run the unit tests:
 
 ```hcl
   teams_webhook_url = "https://hooks.teams.com/services/AAA/BBB/CCC"
-  teams_channel     = "aws-notification"
-  teams_username    = "reporter"
 ```
 
 3. Deploy the resources in the `examples/notify-teams-simple/` project using Terraform

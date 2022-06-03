@@ -22,7 +22,7 @@ Doing serverless with Terraform? Check out [serverless.tf framework](https://ser
 
 ```hcl
 module "notify_teams" {
-  source  = "github.com/trustedshops/terraform-aws-notify-teams
+  source  = "github.com/trustedshops/terraform-aws-notify-teams"
   version = "~> 5.0"
 
   sns_topic_name = "teams-topic"

@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.0.0](https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.19.0...v5.0.0) (2022-06-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* - Update lambda module to 3.1.0 to support AWS provider version 4.8+
+
+### Features
+
+* add lint and unit test workflow checks for pull requests ([#152](https://github.com/trustedshops/terraform-aws-notify-teams/issues/152)) ([d2675ec](https://github.com/trustedshops/terraform-aws-notify-teams/commit/d2675eca91f3ca4bc8b7a18912ae84b36b7922f1))
+* add support for recreating package locally if not missing/not present ([#158](https://github.com/trustedshops/terraform-aws-notify-teams/issues/158)) ([912e11d](https://github.com/trustedshops/terraform-aws-notify-teams/commit/912e11dc38416650ac07e0762a5e469a030032bd))
+* Added ephemeral_storage_size variable ([#167](https://github.com/trustedshops/terraform-aws-notify-teams/issues/167)) ([c82299a](https://github.com/trustedshops/terraform-aws-notify-teams/commit/c82299aaec22f301c62f220d8446675647168ff4))
+* Added path input variable for lambda module IAM role ([#150](https://github.com/trustedshops/terraform-aws-notify-teams/issues/150)) ([fc0c120](https://github.com/trustedshops/terraform-aws-notify-teams/commit/fc0c120bd379be65177745637ad402b46334cda5))
+* Added policy path variable to lambda module IAM role policy ([#153](https://github.com/trustedshops/terraform-aws-notify-teams/issues/153)) ([b3179a9](https://github.com/trustedshops/terraform-aws-notify-teams/commit/b3179a9f025943da60daf39d3ce73e88ed57e9ba))
+* Added support for GuardDuty Findings format ([#143](https://github.com/trustedshops/terraform-aws-notify-teams/issues/143)) ([2ca9945](https://github.com/trustedshops/terraform-aws-notify-teams/commit/2ca9945e6263a729e2418b05e8b62f01e133a4a1))
+* first draft new structure for lambda and messages ([3a15d3b](https://github.com/trustedshops/terraform-aws-notify-teams/commit/3a15d3bf9b4322ba664e986ce5b4d2d9d3c879fe))
+* Revert incorrectly removed output this_slack_topic_arn ([#159](https://github.com/trustedshops/terraform-aws-notify-teams/issues/159)) ([24ec027](https://github.com/trustedshops/terraform-aws-notify-teams/commit/24ec027e1b6fe708eb4a6d7788a64d9452ecbfe0))
+* Update lambda module and bump Terraform/AWS provider versions ([#151](https://github.com/trustedshops/terraform-aws-notify-teams/issues/151)) ([0a1fae8](https://github.com/trustedshops/terraform-aws-notify-teams/commit/0a1fae86060248353eea2ededad26f43774e500e))
+* Update lambda module to 3.1.0 to support AWS provider version 4.8+ ([#166](https://github.com/trustedshops/terraform-aws-notify-teams/issues/166)) ([ea822a3](https://github.com/trustedshops/terraform-aws-notify-teams/commit/ea822a3dbd4ac24803385cabae43538c9a3b10f3))
+
+
+### Bug Fixes
+
+* format, typing ([648fb0a](https://github.com/trustedshops/terraform-aws-notify-teams/commit/648fb0a952ee06f0fc4c5a09f1ec5274c3df49db))
+* hopefully right token name ([1b1477c](https://github.com/trustedshops/terraform-aws-notify-teams/commit/1b1477c15b4c9c7eaef824c63923118a28cdd740))
+* line break string ([14c0313](https://github.com/trustedshops/terraform-aws-notify-teams/commit/14c0313b7100f3fbd7b275b225c2754d192fd755))
+* make release work again ([4396f79](https://github.com/trustedshops/terraform-aws-notify-teams/commit/4396f79ebb635bf831fae64254899431df65ff97))
+* merge conflicts from upstream ([a798336](https://github.com/trustedshops/terraform-aws-notify-teams/commit/a79833616e41560e4e28f7d3465b4781c1b29609))
+* reduce complexity ([bb4321b](https://github.com/trustedshops/terraform-aws-notify-teams/commit/bb4321bbc75ed0dc646cc52920bb04f58fc84adb))
+* remove accidentialy added files in merge ([1adefcc](https://github.com/trustedshops/terraform-aws-notify-teams/commit/1adefccc7be27d60249800e68c9269612ee0c8ce))
+* remove not working script ([cc1e3b4](https://github.com/trustedshops/terraform-aws-notify-teams/commit/cc1e3b4d4666ebbbdd541c6bd4e56d13232919e2))
+* restructure method for finding urls ([8ec3115](https://github.com/trustedshops/terraform-aws-notify-teams/commit/8ec3115b3315d544ad3f64307205bbf28ff10c46))
+* update CI/CD process to enable auto-release workflow ([#149](https://github.com/trustedshops/terraform-aws-notify-teams/issues/149)) ([f7dd0a3](https://github.com/trustedshops/terraform-aws-notify-teams/commit/f7dd0a35d1c140a3465564740abe3579c9e12b48))
+
 ## [5.1.0](https://github.com/terraform-aws-modules/terraform-aws-notify-slack/compare/v5.0.0...v5.1.0) (2022-05-04)
 
 

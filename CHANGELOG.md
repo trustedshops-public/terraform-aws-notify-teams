@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+### [5.0.1](https://github.com/trustedshops/terraform-aws-notify-teams/compare/v5.0.0...v5.0.1) (2022-06-07)
+
+
+### Bug Fixes
+
+* add count to local exec ([009e96d](https://github.com/trustedshops/terraform-aws-notify-teams/commit/009e96dca0a7b3b24f493f3236a81f83c662593f))
+* typo ([a1ec5ac](https://github.com/trustedshops/terraform-aws-notify-teams/commit/a1ec5ace93b49d420c0caf303ff703971a1746e3))
+
 ## [5.0.0](https://github.com/trustedshops/terraform-aws-notify-teams/compare/v4.19.0...v5.0.0) (2022-06-03)
 
 

@@ -1,4 +1,6 @@
 # AWS Notify Teams Terraform module
+[![GitHub License](https://img.shields.io/badge/license-Apache--2-lightgrey.svg)](https://github.com/trustedshops-public/terraform-aws-notify-teams/blob/main/LICENSE)
+
 
 This module creates an SNS topic (or uses an existing one) and an AWS Lambda function that sends notifications to Teams using the [incoming webhooks API](https://api.teams.com/incoming-webhooks).
 

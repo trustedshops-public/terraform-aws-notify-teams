@@ -77,7 +77,7 @@ resource "aws_sns_topic_subscription" "this" {
 resource "null_resource" "this" {
   count = var.create ? 1 : 0
   provisioner "local-exec" {
-    command     = "pipenv lock -r > requirements.txt"
+    command     = "pipenv lock && pipenv requirements > requirements.txt"
     working_dir = "${path.module}/functions"
   }
 }

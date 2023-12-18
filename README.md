@@ -1,90 +1,32 @@
-# AWS Notify Teams Terraform module
-
-This module creates an SNS topic (or uses an existing one) and an AWS Lambda function that sends notifications to Teams using the [incoming webhooks API](https://api.teams.com/incoming-webhooks).
-
-Start by setting up an [incoming webhook integration](https://my.teams.com/services/new/incoming-webhook/) in your Teams workspace.
-
-Doing serverless with Terraform? Check out [serverless.tf framework](https://serverless.tf), which aims to simplify all operations when working with the serverless in Terraform.
-
-## Supported Features
-
-- AWS Lambda runtime Python 3.8
-- Create new SNS topic or use existing one
-- Support plaintext and encrypted version of Teams webhook URL
-- Most of Teams message options are customizable
-- Various event types are supported, even generic messages:
-  - AWS CloudWatch Alarms
-  - AWS CloudWatch LogMetrics Alarms
-  - AWS GuardDuty Findings
-
-
-## Usage
-
-```hcl
-module "notify_teams" {
-  source  = "git::https://github.com/trustedshops/terraform-aws-notify-teams.git?ref=v5.0.0"
-
-  sns_topic_name = "teams-topic"
-
-  teams_webhook_url = "https://hooks.teams.com/services/AAA/BBB/CCC"
-}
-```
-
-## Using with Terraform Cloud Agents
-
-[Terraform Cloud Agents](https://www.terraform.io/docs/cloud/workspaces/agent.html) are a paid feature, available as part of the Terraform Cloud for Business upgrade package.
-
-This module requires Python 3.8. You can customize [tfc-agent](https://hub.docker.com/r/hashicorp/tfc-agent) to include Python using this sample `Dockerfile`:
-
-```
-FROM hashicorp/tfc-agent:latest
-RUN apt-get -y update && apt-get -y install python3.8 python3-pip
-ENTRYPOINT ["/bin/tfc-agent"]
-```
-
-## Use existing SNS topic or create new
-
-If you want to subscribe the AWS Lambda Function created by this module to an existing SNS topic you should specify `create_sns_topic = false` as an argument and specify the name of existing SNS topic name in `sns_topic_name`.
-
-## Examples
-
-- [notify-teams-simple](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/examples/notify-teams-simple) - Creates SNS topic which sends messages to Teams channel.
-- [cloudwatch-alerts-to-teams](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/examples/cloudwatch-alerts-to-teams) - End to end example which shows how to send AWS Cloudwatch alerts to Teams channel and use KMS to encrypt webhook URL.
-
-## Local Development and Testing
-
-See the [functions](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/functions) for further details.
-
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.13.1 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.8 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.1 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.8 |
-| <a name="provider_null"></a> [null](#provider\_null) | >=3.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.31.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.2 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_lambda"></a> [lambda](#module\_lambda) | terraform-aws-modules/lambda/aws | 3.2.0 |
+| <a name="module_lambda"></a> [lambda](#module\_lambda) | terraform-aws-modules/lambda/aws | 6.5.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_log_group.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
+| [aws_cloudwatch_log_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_sns_topic.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
-| [aws_sns_topic_subscription.sns_notify_teams](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
-| [null_resource.create_requirements_file](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [aws_sns_topic_subscription.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
+| [null_resource.this](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
@@ -139,12 +81,3 @@ See the [functions](https://github.com/terraform-aws-modules/terraform-aws-notif
 | <a name="output_notify_teams_lambda_function_version"></a> [notify\_teams\_lambda\_function\_version](#output\_notify\_teams\_lambda\_function\_version) | Latest published version of your Lambda function |
 | <a name="output_teams_topic_arn"></a> [teams\_topic\_arn](#output\_teams\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams |
 | <a name="output_this_teams_topic_arn"></a> [this\_teams\_topic\_arn](#output\_this\_teams\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams (backward compatibility for version 4.x) |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-
-## Authors
-
-Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/graphs/contributors).
-
-## License
-
-Apache 2 Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/LICENSE) for full details.

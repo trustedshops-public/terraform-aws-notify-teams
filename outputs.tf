@@ -46,5 +46,5 @@ output "notify_teams_lambda_function_version" {
 
 output "lambda_cloudwatch_log_group_arn" {
   description = "The Amazon Resource Name (ARN) specifying the log group"
-  value       = try(aws_cloudwatch_log_group.lambda[0].arn, "")
+  value       = try(aws_cloudwatch_log_group.this[0].arn, "")
 }

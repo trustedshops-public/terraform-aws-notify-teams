@@ -13,7 +13,7 @@ locals {
     sid       = "AllowWriteToCloudwatchLogs"
     effect    = "Allow"
     actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
-    resources = [replace("${try(aws_cloudwatch_log_group.lambda[0].arn, "")}:*", ":*:*", ":*")]
+    resources = [replace("${try(aws_cloudwatch_log_group.this[0].arn, "")}:*", ":*:*", ":*")]
   }
 
   lambda_policy_document_kms = {
@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "lambda" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "lambda" {
+resource "aws_cloudwatch_log_group" "this" {
   count = var.create ? 1 : 0
 
   name              = "/aws/lambda/${var.lambda_function_name}"
@@ -65,7 +65,7 @@ resource "aws_sns_topic" "this" {
   tags = merge(var.tags, var.sns_topic_tags)
 }
 
-resource "aws_sns_topic_subscription" "sns_notify_teams" {
+resource "aws_sns_topic_subscription" "this" {
   count = var.create ? 1 : 0
 
   topic_arn     = local.sns_topic_arn
@@ -74,7 +74,7 @@ resource "aws_sns_topic_subscription" "sns_notify_teams" {
   filter_policy = var.subscription_filter_policy
 }
 
-resource "null_resource" "create_requirements_file" {
+resource "null_resource" "this" {
   count = var.create ? 1 : 0
   provisioner "local-exec" {
     command     = "pipenv lock -r > requirements.txt"
@@ -84,7 +84,7 @@ resource "null_resource" "create_requirements_file" {
 
 module "lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "3.2.0"
+  version = "6.5.0"
 
   create = var.create
 
@@ -147,7 +147,7 @@ module "lambda" {
   tags = merge(var.tags, var.lambda_function_tags)
 
   depends_on = [
-    aws_cloudwatch_log_group.lambda,
-    null_resource.create_requirements_file
+    aws_cloudwatch_log_group.this,
+    null_resource.this
   ]
 }

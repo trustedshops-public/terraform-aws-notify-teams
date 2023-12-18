@@ -1,61 +1,3 @@
-# CloudWatch alerts to Teams
-
-Configuration in this directory creates a VPC, an SNS topic that sends messages to a Teams channel with Teams webhook URL encrypted using KMS and a CloudWatch Alarm that monitors the duration of lambda execution.
-
-## KMS keys
-
-There are 3 ways to define KMS key which should be used by Lambda function:
-
-1. Create [aws_kms_key resource](https://www.terraform.io/docs/providers/aws/r/kms_key.html) and put ARN of it as `kms_key_arn` argument to this module
-1. Use [aws_kms_alias data-source](https://www.terraform.io/docs/providers/aws/d/kms_alias.html) to get an existing KMS key alias and put ARN of it as `kms_key_arn` argument to this module
-1. Hard-code the ARN of KMS key
-
-### Option 1:
-
-```hcl
-resource "aws_kms_key" "this" {
-  description = "KMS key for notify-teams test"
-}
-
-resource "aws_kms_alias" "this" {
-  name          = "alias/kms-test-key"
-  target_key_id = aws_kms_key.this.id
-}
-
-// kms_key_arn = aws_kms_key.this.arn
-```
-
-### Option 2:
-
-```
-data "aws_kms_alias" "this" {
- name = "alias/kms-test-key"
-}
-
-// kms_key_arn = data.aws_kms_alias.this.target_key_arn
-```
-
-### Option 3:
-
-```
-// kms_key_arn = "arn:aws:kms:eu-west-1:835367859851:key/054b4846-95fe-4537-94f2-1dfd255238cf"
-```
-
-## Usage
-
-To run this example you need to execute:
-
-```bash
-$ terraform init
-$ terraform plan
-$ terraform apply
-```
-
-Note that in practice, encryption of the Teams webhook URL should happen differently (outside of this module).
-
-Note that this example may create resources which can cost money. Run `terraform destroy` when you don't need these resources.
-
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
 | Name | Version |
@@ -68,7 +10,7 @@ Note that this example may create resources which can cost money. Run `terraform
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.8 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.31.0 |
 
 ## Modules
 
@@ -80,8 +22,8 @@ Note that this example may create resources which can cost money. Run `terraform
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_metric_alarm.lambda_duration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
-| [aws_kms_ciphertext.teams_url](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_ciphertext) | resource |
+| [aws_cloudwatch_metric_alarm.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
+| [aws_kms_ciphertext.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_ciphertext) | resource |
 | [aws_kms_key.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 
 ## Inputs
@@ -100,4 +42,3 @@ No inputs.
 | <a name="output_notify_teams_lambda_function_name"></a> [notify\_teams\_lambda\_function\_name](#output\_notify\_teams\_lambda\_function\_name) | The name of the Lambda function |
 | <a name="output_notify_teams_lambda_function_version"></a> [notify\_teams\_lambda\_function\_version](#output\_notify\_teams\_lambda\_function\_version) | Latest published version of your Lambda function |
 | <a name="output_sns_topic_arn"></a> [sns\_topic\_arn](#output\_sns\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

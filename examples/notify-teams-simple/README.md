@@ -1,24 +1,3 @@
-Basic Teams notification
-========================
-
-Configuration in this directory creates an SNS topic that sends messages to a Teams channel.
-
-Note, this example does not use KMS key.
-
-Usage
-=====
-
-To run this example you need to execute:
-
-```bash
-$ terraform init
-$ terraform plan
-$ terraform apply
-```
-
-Note that this example may create resources which can cost money (AWS Elastic IP, for example). Run `terraform destroy` when you don't need these resources.
-
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
 | Name | Version |
@@ -31,8 +10,8 @@ Note that this example may create resources which can cost money (AWS Elastic IP
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.8 |
-| <a name="provider_local"></a> [local](#provider\_local) | >= 2.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.31.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.4.1 |
 
 ## Modules
 
@@ -44,8 +23,8 @@ Note that this example may create resources which can cost money (AWS Elastic IP
 
 | Name | Type |
 |------|------|
-| [aws_sns_topic.example](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
-| [local_file.integration_testing](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [aws_sns_topic.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
+| [local_file.this](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 
 ## Inputs
 
@@ -66,4 +45,3 @@ Note that this example may create resources which can cost money (AWS Elastic IP
 | <a name="output_notify_teams_lambda_function_name"></a> [notify\_teams\_lambda\_function\_name](#output\_notify\_teams\_lambda\_function\_name) | The name of the Lambda function |
 | <a name="output_notify_teams_lambda_function_version"></a> [notify\_teams\_lambda\_function\_version](#output\_notify\_teams\_lambda\_function\_version) | Latest published version of your Lambda function |
 | <a name="output_sns_topic_arn"></a> [sns\_topic\_arn](#output\_sns\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

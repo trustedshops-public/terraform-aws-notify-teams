@@ -16,7 +16,7 @@ resource "aws_kms_key" "this" {
 
 # Encrypt the URL, storing encryption here will show it in logs and in tfstate
 # https://www.terraform.io/docs/state/sensitive-data.html
-resource "aws_kms_ciphertext" "teams_url" {
+resource "aws_kms_ciphertext" "this" {
   plaintext = "https://hooks.teams.com/services/AAA/BBB/CCC"
   key_id    = aws_kms_key.this.arn
 }
@@ -30,7 +30,7 @@ module "notify_teams" {
 
   lambda_function_name = "notify_teams_${each.value}"
 
-  teams_webhook_url = aws_kms_ciphertext.teams_url.ciphertext_blob
+  teams_webhook_url = aws_kms_ciphertext.this.ciphertext_blob
 
   kms_key_arn = aws_kms_key.this.arn
 
@@ -46,7 +46,7 @@ module "notify_teams" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
+resource "aws_cloudwatch_metric_alarm" "this" {
   for_each            = toset(local.env)
   alarm_name          = "NotifyTeamsDuration"
   comparison_operator = "GreaterThanOrEqualToThreshold"

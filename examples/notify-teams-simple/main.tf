@@ -15,7 +15,7 @@ locals {
 # Supporting Resources
 ################################################################################
 
-resource "aws_sns_topic" "example" {
+resource "aws_sns_topic" "this" {
   name = local.name
   tags = local.tags
 }
@@ -27,7 +27,7 @@ resource "aws_sns_topic" "example" {
 module "notify_teams" {
   source = "../../"
 
-  sns_topic_name   = aws_sns_topic.example.name
+  sns_topic_name   = aws_sns_topic.this.name
   create_sns_topic = false
 
   teams_webhook_url = var.teams_webhook_url
@@ -42,11 +42,11 @@ module "notify_teams" {
 # This populates a file that is gitignored to aid in executing the integration tests locally
 ################################################################################
 
-resource "local_file" "integration_testing" {
+resource "local_file" "this" {
   filename = "${path.module}/../../functions/.int.env"
   content  = <<-EOT
     REGION=${local.region}
     LAMBDA_FUNCTION_NAME=${module.notify_teams.notify_teams_lambda_function_name}
-    SNS_TOPIC_ARN=${aws_sns_topic.example.arn}
+    SNS_TOPIC_ARN=${aws_sns_topic.this.arn}
     EOT
 }

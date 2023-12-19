@@ -5,10 +5,11 @@ name = "pypi"
 
 [packages]
 pymsteams = "*"
+boto3 = "*"
+botocore = "*"
+notifyteams = {file = ".", editable = true}
 
 [dev-packages]
-boto3 = "~=1.20"
-botocore = "~=1.23"
 black = "*"
 flake8 = "*"
 isort = "*"
@@ -16,10 +17,11 @@ mypy = "*"
 pytest = "*"
 pytest-cov = "*"
 radon = "*"
-snapshottest = "~=0.6"
+snapshottest = "*"
+setuptools = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.11"
 
 [scripts]
 test = "python3 -m pytest --cov --cov-report=term"

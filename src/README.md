@@ -24,13 +24,13 @@ Pipenv is used to help manage the python dependencies and local virtualenv for l
 Install the projects Python dependencies (with development dependencies) locally by running the following command.
 
 ```bash
-  $ pipenv install --dev
+  pipenv install --dev
 ```
 
 If you add/change/modify any of the Pipfile dependencies, you can update your local virtualenv using:
 
 ```bash
-  $ pipenv update
+  pipenv update
 ```
 
 ### Testing
@@ -39,7 +39,7 @@ If you add/change/modify any of the Pipfile dependencies, you can update your lo
 
 In the `functions/` directory there are two folders that contain sample message payloads used for testing and validation:
 
-1. `functions/events/` contains raw events as provided by AWS. You can see a more in-depth list of example events in the (AWS documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html)
+1. `functions/events/` contains raw events as provided by AWS. You can see a more in-depth list of example events in the (AWS documentation](<https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html>)
 2. `functions/messages/` contains SNS message payloads in the form that they are delivered to the Teams notify lambda function. The `Message` attribute field is where the payload is stored that will be parsed and sent to Teams; this can be events like those described above in #1, or any string/stringified-JSON
 
 #### Unit Tests
@@ -66,8 +66,8 @@ When a change is required to update the snapshots, please do the following:
 1. Update the snapshots by running:
 
 ```bash
-  $ pipenv run test:updatesnapshots
-  $ pipenv run format # this is necessary since the generated code follows its own style
+  pipenv run test:updatesnapshots
+  pipenv run format # this is necessary since the generated code follows its own style
 ```
 
 2. Provide a clear reasoning within your pull request as to why the snapshots have changed
@@ -78,8 +78,8 @@ Integration tests require setting up a live Teams webhook
 
 To run the unit tests:
 
-1.  Set up a dedicated teams channel as a test sandbox with it's own webhook. See [Teams Incoming Webhooks docs](https://api.teams.com/messaging/webhooks) for details.
-2.  From within the `examples/notify-teams-simple/` directory, update the `teams_*` variables to use your values:
+1. Set up a dedicated teams channel as a test sandbox with it's own webhook. See [Teams Incoming Webhooks docs](https://api.teams.com/messaging/webhooks) for details.
+2. From within the `examples/notify-teams-simple/` directory, update the `teams_*` variables to use your values:
 
 ```hcl
   teams_webhook_url = "https://hooks.teams.com/services/AAA/BBB/CCC"
@@ -88,13 +88,13 @@ To run the unit tests:
 3. Deploy the resources in the `examples/notify-teams-simple/` project using Terraform
 
 ```bash
-  $ terraform init && terraform apply -y
+  terraform init && terraform apply -y
 ```
 
-4.  From within the `functions/` directory, execute the integration tests locally:
+4. From within the `functions/` directory, execute the integration tests locally:
 
 ```bash
-  $ pipenv run python integration_test.py
+  pipenv run python integration_test.py
 ```
 
 Within the Teams channel that is associated to the webhook URL provided, you should see all of the messages arriving. You can compared the messages to the payloads in the `functions/events/` and `functions/messages` directories; there should be one Teams message per event payload/file.
@@ -102,7 +102,7 @@ Within the Teams channel that is associated to the webhook URL provided, you sho
 5. Do not forget to clean up your provisioned resources by returning to the `example/notify-teams-simple/` directory and destroying using Terraform:
 
 ```bash
-  $ terraform destroy -y
+  terraform destroy -y
 ```
 
 ## Supporting Additional Events
@@ -115,6 +115,6 @@ To add new events with custom message formatting, the general workflow will cons
 4. Update the snapshots to include your new event payload and expected output. Note - the other snapshots should not be affected by your change, the snapshot diff should only show your new event:
 
 ```bash
-  $ pipenv run test:updatesnapshots
-  $ pipenv run format # this is necessary since the generated code follows its own style
+  pipenv run test:updatesnapshots
+  pipenv run format # this is necessary since the generated code follows its own style
 ```

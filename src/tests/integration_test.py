@@ -6,7 +6,6 @@
     Executes tests against live Teams webhook
 
 """
-
 import os
 from pprint import pprint
 from typing import List
@@ -89,5 +88,7 @@ if __name__ == "__main__":
     LAMBDA_FUNCTION_NAME = os.environ["LAMBDA_FUNCTION_NAME"]
     SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
 
+    pprint("------")
     invoke_lambda_handler()
+    pprint("------")
     publish_event_to_sns_topic()

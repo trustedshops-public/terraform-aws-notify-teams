@@ -6,11 +6,10 @@
     Unit tests for `notify_teams.py`
 
 """
-
 import ast
 import os
 
-import notify_teams
+import notifyteams.scripts.notify_teams as notify_teams
 import pytest
 
 

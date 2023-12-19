@@ -14,11 +14,18 @@ import re
 import urllib.parse
 import urllib.request
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any
+from typing import cast
+from typing import Dict
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import boto3
 import pymsteams
 from botocore.exceptions import NoCredentialsError
+from notifyteams.alarms_colors import CloudWatchAlarmState
+from notifyteams.alarms_colors import GuardDutyFindingSeverity
 
 # Set default region if not provided
 REGION = os.environ.get("AWS_REGION", "eu-central-1")
@@ -92,20 +99,6 @@ def get_service_url(region: str, service: str) -> str:
         raise
 
 
-class CloudWatchAlarmState(Enum):
-    """Maps CloudWatch notification state to Teams message format color"""
-
-    # {
-    #  "red": "FF0000",
-    #  "green": "00FF00",
-    #  "blue": "0000FF",
-    #  "yellow": "FFFF00"
-    #  }
-    OK = "00FF00"
-    INSUFFICIENT_DATA = "0000FF"
-    ALARM = "FF0000"
-
-
 def format_cloudwatch_alarm(message: Dict[str, Any], region: str) -> Dict[str, Any]:
     """
     Format CloudWatch alarm event into Teams message format
@@ -151,20 +144,6 @@ def format_cloudwatch_alarm(message: Dict[str, Any], region: str) -> Dict[str, A
         ],
         "text": f"AWS CloudWatch notification - {message['AlarmName']}",
     }
-
-
-class GuardDutyFindingSeverity(Enum):
-    """Maps GuardDuty finding severity to Teams message format color"""
-
-    # {
-    #  "red": "FF0000",
-    #  "green": "00FF00",
-    #  "blue": "0000FF",
-    #  "yellow": "FFFF00"
-    #  }
-    Low = "#777777"
-    Medium = "FFFF00"
-    High = "FF0000"
 
 
 def format_guardduty_finding(message: Dict[str, Any], region: str) -> Dict[str, Any]:
@@ -389,58 +368,3 @@ def get_teams_message_strucuture(payload: Dict[str, Any]) -> pymsteams.connector
         section = _create_section(payload)
         result.addSection(section)
     return result
-
-
-def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:
-    """
-    Lambda function to parse notification events and forward to Teams
-
-    :param event: lambda expected event object
-    :param context: lambda expected context object
-    :returns: none
-    """
-    # Level	Numeric value
-    # CRITICAL	50
-    # ERROR	    40
-    # WARNING	30
-    # INFO	    20
-    # DEBUG	    10
-    # NOTSET	0
-    if os.environ.get("DEBUG", "False") == "True":
-        log.setLevel(level=10)
-    else:
-        log.setLevel(level=20)
-
-    if os.environ.get("LOG_EVENTS", "False") == "True":
-        log.info(f"Event logging enabled: `{json.dumps(event)}`")
-
-    responses = list(dict())
-
-    for record in event["Records"]:
-        sns = record["Sns"]
-        subject = sns["Subject"]
-        message = sns["Message"]
-        region = sns["TopicArn"].split(":")[3]
-
-        payload = get_teams_message_payload(
-            message=message, region=region, subject=subject
-        )
-
-        log.debug(f"{payload}")
-
-        for attachment in payload["attachments"]:
-            teams_message = get_teams_message_strucuture(payload=attachment)
-            response = send_teams_notification(teams_message=teams_message)
-            responses.append(response)
-
-            log.debug(f"{response=}")
-
-            if json.loads(response)["code"] != 200:
-                response_info = json.loads(response)["info"]
-                log.error(
-                    f"Error: received status `{response_info}` using event `{event}` and context `{context}`"
-                )
-
-    log.debug(f"{responses=}")
-
-    return ", ".join(responses)

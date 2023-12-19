@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 import os
-from logging import log
 from typing import Any
 from typing import Dict
 
 from notifyteams.notify_teams import get_teams_message_payload
 from notifyteams.notify_teams import get_teams_message_strucuture
 from notifyteams.notify_teams import send_teams_notification
+
+logging.basicConfig(
+    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+log = logging.getLogger(__name__)
 
 
 def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:

@@ -97,7 +97,7 @@ module "lambda" {
     pip_requirements = "${path.module}/functions/requirements.txt"
   }]
   recreate_missing_package       = var.recreate_missing_package
-  runtime                        = "python3.8"
+  runtime                        = "python3.11"
   timeout                        = 30
   kms_key_arn                    = var.kms_key_arn
   reserved_concurrent_executions = var.reserved_concurrent_executions

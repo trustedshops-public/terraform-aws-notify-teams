@@ -6,12 +6,18 @@
     Executes tests against live Teams webhook
 
 """
+import logging
 import os
-from pprint import pprint
 from typing import List
 
 import boto3
 import pytest
+
+logging.basicConfig(
+    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+log = logging.getLogger(__name__)
 
 
 @pytest.mark.skip(reason="Execute with`pytest run python integration_test.py`")
@@ -50,7 +56,7 @@ def invoke_lambda_handler():
             InvocationType="Event",
             Payload=msg,
         )
-        pprint(response)
+        log.debug(response)
 
 
 @pytest.mark.skip(reason="Execute with`pytest run python integration_test.py`")
@@ -73,7 +79,7 @@ def publish_event_to_sns_topic():
             Message=msg,
             Subject=event,
         )
-        pprint(response)
+        log.debug(response)
 
 
 if __name__ == "__main__":
@@ -88,7 +94,5 @@ if __name__ == "__main__":
     LAMBDA_FUNCTION_NAME = os.environ["LAMBDA_FUNCTION_NAME"]
     SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
 
-    pprint("------")
     invoke_lambda_handler()
-    pprint("------")
     publish_event_to_sns_topic()

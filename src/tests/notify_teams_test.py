@@ -9,8 +9,8 @@
 import ast
 import os
 
-import notifyteams.scripts.notify_teams as notify_teams
 import pytest
+from notifyteams import notify_teams
 
 
 def test_sns_get_teams_message_payload_snapshots(snapshot, monkeypatch):

@@ -5,15 +5,16 @@ import os
 from typing import Any
 from typing import Dict
 
-from notifyteams.notify_teams import get_teams_message_payload
-from notifyteams.notify_teams import get_teams_message_strucuture
-from notifyteams.notify_teams import send_teams_notification
+from notify_teams import get_teams_message_payload
+from notify_teams import get_teams_message_strucuture
+from notify_teams import send_teams_notification
 
 logging.basicConfig(
     format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
     handlers=[logging.StreamHandler()],
 )
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG if os.environ.get("DEBUG", "False") == "True" else logging.INFO)
 
 
 def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:
@@ -22,22 +23,16 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:
 
     :param event: lambda expected event object
     :param context: lambda expected context object
-    :returns: none
+    :returns: str
     """
-    # Level	Numeric value
-    # CRITICAL	50
-    # ERROR	    40
-    # WARNING	30
-    # INFO	    20
-    # DEBUG	    10
-    # NOTSET	0
+    print("Lambda function started")
+    print(log.level)
     if os.environ.get("DEBUG", "False") == "True":
-        log.setLevel(level=10)
+        log.info("Debug mode enabled")
     else:
-        log.setLevel(level=20)
+        log.info("Debug mode disabled")
 
-    if os.environ.get("LOG_EVENTS", "False") == "True":
-        log.info(f"Event logging enabled: `{json.dumps(event)}`")
+    log.debug(f"Event: {json.dumps(event)}")
 
     responses = list(dict())
 
@@ -50,8 +45,6 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:
         payload = get_teams_message_payload(
             message=message, region=region, subject=subject
         )
-
-        log.debug(f"{payload}")
 
         for attachment in payload["attachments"]:
             teams_message = get_teams_message_strucuture(payload=attachment)
@@ -66,6 +59,6 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> str:
                     f"Error: received status `{response_info}` using event `{event}` and context `{context}`"
                 )
 
-    log.debug(f"{responses=}")
+    print("Lambda function finished")
 
     return ", ".join(responses)

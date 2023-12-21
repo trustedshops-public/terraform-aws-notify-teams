@@ -23,9 +23,9 @@ from typing import Union
 
 import boto3
 import pymsteams
+from alarms_colors import CloudWatchAlarmState
+from alarms_colors import GuardDutyFindingSeverity
 from botocore.exceptions import NoCredentialsError
-from notifyteams.alarms_colors import CloudWatchAlarmState
-from notifyteams.alarms_colors import GuardDutyFindingSeverity
 
 # Set default region if not provided
 REGION = os.environ.get("AWS_REGION", "eu-central-1")
@@ -38,6 +38,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG if os.environ.get("DEBUG", "False") == "True" else logging.INFO)
 
 
 class AwsService(Enum):
@@ -51,31 +52,42 @@ def decrypt_url(encrypted_url: str) -> str:
     """
     Decrypt encrypted URL with KMS
 
-      :param encrypted_url: URL to decrypt with KMS
-      :returns: plaintext URL
+    :param encrypted_url: URL to decrypt with KMS
+    :returns: plaintext URL
     """
+    decrypted_url = ""
+
     try:
+        log.debug(f"Encrypted URL: {encrypted_url}")
         decrypted_payload = KMS_CLIENT.decrypt(
             CiphertextBlob=base64.b64decode(encrypted_url)
         )
-        return decrypted_payload["Plaintext"].decode()
+        log.debug(f"Decrypted Payload: {decrypted_payload}")
+        decrypted_url = decrypted_payload["Plaintext"].decode()
+        log.debug(f"Decrypted URL: {decrypted_url}")
     except Exception:
         log.exception("Failed to decrypt URL with KMS")
-        return ""
+
+    return decrypted_url
 
 
 def get_account_info() -> Tuple[str, str]:
     """
     Gather Account details
+
     :returns: AWS Account Details
     """
     account_id = "Not Found"
     alias = "Not Found"
+
     try:
         account_id = boto3.client("sts").get_caller_identity().get("Account")
         alias = boto3.client("iam").list_account_aliases()["AccountAliases"][0]
     except NoCredentialsError:
-        log.error("Could not determine Account details")
+        log.exception("Could not determine Account details")
+
+    log.debug(f"Account ID: {account_id}")
+    log.debug(f"Account Alias: {alias}")
     return account_id, alias
 
 
@@ -83,19 +95,22 @@ def get_service_url(region: str, service: str) -> str:
     """
     Get the appropriate service URL for the region
 
-      :param region: name of the AWS region
-      :param service: name of the AWS service
-      :returns: AWS console url formatted for the region and service provided
+    :param region: name of the AWS region
+    :param service: name of the AWS service
+    :returns: AWS console url formatted for the region and service provided
     """
     try:
         service_name = AwsService[service].value
-        if region.startswith("us-gov-"):
-            return f"https://console.amazonaws-us-gov.com/{service_name}/home?region={region}"
-        else:
-            return f"https://console.aws.amazon.com/{service_name}/home?region={region}"
 
+        if region.startswith("us-gov-"):
+            result = f"https://console.amazonaws-us-gov.com/{service_name}/home?region={region}"
+        else:
+            result = f"https://console.aws.amazon.com/{service_name}/home?region={region}"
+
+        log.debug(f"Service URL: {result}")
+        return result
     except KeyError:
-        log.error(f"Service {service} is currently not supported")
+        log.exception(f"Service {service} is currently not supported")
         raise
 
 
@@ -109,9 +124,12 @@ def format_cloudwatch_alarm(message: Dict[str, Any], region: str) -> Dict[str, A
     """
 
     cloudwatch_url = get_service_url(region=region, service="cloudwatch")
-    alarm_name = message["AlarmName"]
+    log.debug(f"CloudWatch URL: {cloudwatch_url}")
 
-    return {
+    alarm_name = message["AlarmName"]
+    log.debug(f"Alarm Name: {alarm_name}")
+
+    result = {
         "color": CloudWatchAlarmState[message["NewStateValue"]].value,
         "fallback": f"Alarm {alarm_name} triggered",
         "fields": [
@@ -145,6 +163,9 @@ def format_cloudwatch_alarm(message: Dict[str, Any], region: str) -> Dict[str, A
         "text": f"AWS CloudWatch notification - {message['AlarmName']}",
     }
 
+    log.debug(f"Result: {result}")
+    return result
+
 
 def format_guardduty_finding(message: Dict[str, Any], region: str) -> Dict[str, Any]:
     """
@@ -167,7 +188,13 @@ def format_guardduty_finding(message: Dict[str, Any], region: str) -> Dict[str, 
     else:
         severity = "High"
 
-    return {
+    log.debug(f"GuardDuty URL: {guardduty_url}")
+    log.debug(f"GuardDuty detail: {detail}")
+    log.debug(f"GuardDuty service: {service}")
+    log.debug(f"GuardDuty severity score: {severity_score}")
+    log.debug(f"GuardDuty severity: {severity}")
+
+    result = {
         "color": GuardDutyFindingSeverity[severity].value,
         "fallback": f"GuardDuty Finding: {detail.get('title')}",
         "fields": [
@@ -206,6 +233,9 @@ def format_guardduty_finding(message: Dict[str, Any], region: str) -> Dict[str, 
         "text": f"AWS GuardDuty Finding - {detail.get('title')}",
     }
 
+    log.debug(f"Result: {result}")
+    return result
+
 
 def format_default(
     message: Union[str, Dict], subject: Optional[str] = None
@@ -234,6 +264,8 @@ def format_default(
 
     if fields:
         attachments["fields"] = fields  # type: ignore
+
+    log.debug(f"Attachements: {attachments}")
 
     return attachments
 
@@ -265,25 +297,30 @@ def get_teams_message_payload(
     message = cast(Dict[str, Any], message)
 
     if "AlarmName" in message:
+        log.debug("CloudWatch Alarm notification")
+
         notification = format_cloudwatch_alarm(message=message, region=region)
         attachment = notification
-
     elif (
         isinstance(message, Dict) and message.get("detail-type") == "GuardDuty Finding"
     ):
+        log.debug("GuardDuty Finding notification")
+
         notification = format_guardduty_finding(
             message=message, region=message["region"]
         )
         attachment = notification
-
     elif "attachments" in message or "text" in message:
+        log.debug("Teams formatted message")
         payload = {**payload, **message}
-
     else:
+        log.debug("Default message")
         attachment = format_default(message=message, subject=subject)
 
     if attachment:
         payload["attachments"] = [attachment]  # type: ignore
+
+    log.debug(f"Payload: {payload}")
 
     return payload
 
@@ -296,13 +333,17 @@ def send_teams_notification(teams_message: pymsteams.connectorcard) -> str:
     :returns: response details from sending notification
     """
     teams_url = os.environ["TEAMS_WEBHOOK_URL"]
+    log.debug(f"Teams URL: {teams_url}")
+
     teams_message.newhookurl(teams_url)
     teams_message.send()
-    response = teams_message.last_http_response.status_code
-    return json.dumps({"code": response})
+    response = teams_message.last_http_response
+    log.debug(f"Response: {response}")
+
+    return json.dumps({"code": response.status_code})
 
 
-def _find_url_in_string(url: str) -> str:
+def _find_url_in_string(url: str) -> str | None:
     """
     Checks if a url is in a string
 
@@ -310,15 +351,18 @@ def _find_url_in_string(url: str) -> str:
     :returns: if found the Array of str containing the url otherwise
     an empty Array
     """
+    log.debug(f"Possible URL: {url}")
     # findall() has been used
     # with valid conditions for urls in string
-    regex = (
-        r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,"
-        r"4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\((["
-        r"^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’])) "
-    )
-    result = [x[0] for x in re.findall(regex, url)]
-    return result[0] if result else None
+    regex = "^((http|https)://)[-a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)$"
+    r = re.compile(regex)
+
+    if (re.search(r, url)):
+        result = url
+        log.debug(f"Found URL: {result}")
+        return result
+
+    return None
 
 
 def _create_section(payload: Dict[str, Any]) -> pymsteams.cardsection:
@@ -349,13 +393,15 @@ def get_teams_message_strucuture(payload: Dict[str, Any]) -> pymsteams.connector
     :params payload: generally formatted payload
     :returns: teams message payload
     """
-    result = pymsteams.connectorcard(None)
     account_info = pymsteams.cardsection()
     # account_info.disableMarkdown()
     account_id, alias = get_account_info()
     account_info.addFact("Account ID", account_id)
     account_info.addFact("Account Alias", alias)
+
+    result = pymsteams.connectorcard(None)
     result.addSection(account_info)
+
     if "color" in payload:
         result.color(payload["color"])
     if "fallback" in payload:
@@ -367,4 +413,5 @@ def get_teams_message_strucuture(payload: Dict[str, Any]) -> pymsteams.connector
     if "fields" in payload:
         section = _create_section(payload)
         result.addSection(section)
+
     return result

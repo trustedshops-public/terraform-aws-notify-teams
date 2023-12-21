@@ -13,4 +13,4 @@ exclude =
   .eggs
   *.egg
   .pytest_cache
-  */tests/*
+  ./tests/*

@@ -11,7 +11,7 @@ import os
 from typing import List
 
 import boto3
-import pytest
+from dotenv import dotenv_values
 
 logging.basicConfig(
     format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
@@ -19,8 +19,6 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-
-@pytest.mark.skip(reason="Execute with`pytest run python integration_test.py`")
 def _get_files(directory: str) -> List[str]:
     """
     Helper function to get list of files under `directory`
@@ -35,64 +33,48 @@ def _get_files(directory: str) -> List[str]:
     ]
 
 
-@pytest.mark.skip(reason="Execute with`pytest run python integration_test.py`")
-def invoke_lambda_handler():
+def test_lambda_handler():
     """
     Invoke lambda handler with sample SNS messages
 
     Messages should arrive at the live webhook specified
     """
-    lambda_client = boto3.client("lambda", region_name=REGION)
+    config = dotenv_values(".int.env")
+    lambda_client = boto3.client("lambda", region_name=config['REGION'])
 
     # These are SNS messages that invoke the lambda handler;
     # the event payload is in the `message` field
-    messages = _get_files(directory="./messages")
+    messages = _get_files(directory="./data/messages")
 
     for message in messages:
         with open(message, "r") as mfile:
             msg = mfile.read()
         response = lambda_client.invoke(
-            FunctionName=LAMBDA_FUNCTION_NAME,
+            FunctionName=config['LAMBDA_FUNCTION_NAME'],
             InvocationType="Event",
             Payload=msg,
         )
         log.debug(response)
 
 
-@pytest.mark.skip(reason="Execute with`pytest run python integration_test.py`")
-def publish_event_to_sns_topic():
+def test_event_publish_to_sns_topic():
     """
     Publish sample events to SNS topic created
 
     Messages should arrive at the live webhook specified
     """
-    sns_client = boto3.client("sns", region_name=REGION)
+    config = dotenv_values(".int.env")
+    sns_client = boto3.client("sns", region_name=config['REGION'])
 
     # These are event payloads that will get published
-    events = _get_files(directory="./events")
+    events = _get_files(directory="./data/events")
 
     for event in events:
         with open(event, "r") as efile:
             msg = efile.read()
         response = sns_client.publish(
-            TopicArn=SNS_TOPIC_ARN,
+            TopicArn=config['SNS_TOPIC_ARN'],
             Message=msg,
             Subject=event,
         )
         log.debug(response)
-
-
-if __name__ == "__main__":
-    # Sourcing env vars set by `notify-teams-simple` example
-    with open(".int.env", "r") as envvarfile:
-        for line in envvarfile.readlines():
-            (_var, _val) = line.strip().split("=")
-            os.environ[_var] = _val
-
-    # Not using .get() so it fails loudly if not set (`KeyError`)
-    REGION = os.environ["REGION"]
-    LAMBDA_FUNCTION_NAME = os.environ["LAMBDA_FUNCTION_NAME"]
-    SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
-
-    invoke_lambda_handler()
-    publish_event_to_sns_topic()

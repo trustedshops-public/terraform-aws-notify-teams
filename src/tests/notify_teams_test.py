@@ -7,10 +7,17 @@
 
 """
 import ast
+import inspect
 import os
+import sys
 
 import pytest
-from notifyteams import notify_teams
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+import notify_teams
 
 
 def test_sns_get_teams_message_payload_snapshots(snapshot, monkeypatch):
@@ -20,9 +27,9 @@ def test_sns_get_teams_message_payload_snapshots(snapshot, monkeypatch):
     Run `pipenv run test:updatesnapshots` to update snapshot images
     """
 
-    # These are SNS messages that invoke the lambda handler; the event payload is in the
-    # `message` field
-    _dir = "./messages"
+    # These are SNS messages that invoke the lambda handler; the event
+    # payload is in the `message` field
+    _dir = "./data/messages"
     messages = [f for f in os.listdir(_dir) if os.path.isfile(os.path.join(_dir, f))]
 
     for file in messages:
@@ -30,7 +37,8 @@ def test_sns_get_teams_message_payload_snapshots(snapshot, monkeypatch):
             event = ast.literal_eval(ofile.read())
 
             attachments = []
-            # These are as delivered wrapped in an SNS message payload so we unpack
+            # These are as delivered wrapped in an SNS message payload so we
+            # unpack
             for record in event["Records"]:
                 sns = record["Sns"]
                 subject = sns["Subject"]
@@ -55,7 +63,7 @@ def test_event_get_teams_message_payload_snapshots(snapshot, monkeypatch):
 
     # These are just the raw events that will be converted to JSON string and
     # sent via SNS message
-    _dir = "./events"
+    _dir = "./data/events"
     events = [f for f in os.listdir(_dir) if os.path.isfile(os.path.join(_dir, f))]
 
     for file in events:
@@ -80,7 +88,7 @@ def test_environment_variables_set(monkeypatch):
         "TEAMS_WEBHOOK_URL", "https://hooks.teams.com/services/YOUR/WEBOOK/URL"
     )
 
-    with open(os.path.join("./messages/text_message.json"), "r") as efile:
+    with open(os.path.join("./data/messages/text_message.json"), "r") as efile:
         event = ast.literal_eval(efile.read())
 
         for record in event["Records"]:

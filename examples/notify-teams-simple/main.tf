@@ -43,7 +43,7 @@ module "notify_teams" {
 ################################################################################
 
 resource "local_file" "this" {
-  filename = "${path.module}/../../functions/.int.env"
+  filename = "${path.module}/../../src/tests/.int.env"
   content  = <<-EOT
     REGION=${local.region}
     LAMBDA_FUNCTION_NAME=${module.notify_teams.notify_teams_lambda_function_name}

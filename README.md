@@ -1,10 +1,77 @@
+<!-- BEGIN_TF_DOCS -->
+# AWS Notify Teams Terraform module
+[![GitHub License](https://img.shields.io/badge/license-Apache--2-lightgrey.svg)](https://github.com/trustedshops-public/terraform-aws-notify-teams/blob/main/LICENSE)
+
+---
+> ℹ️ This project is forked and based on [terraform-aws-modules/terraform-aws-notify-slack](https://github.com/terraform-aws-modules/terraform-aws-notify-slack). It has the same license and
+> contains some tweaks we made to improve the tool in general or make it work better with our infrastructure.
+>
+> Feel free to use it, fork it or base your own work on it.
+---
+
+This module creates an SNS topic (or uses an existing one) and an AWS Lambda function that sends notifications to Teams using the [incoming webhooks API](https://api.teams.com/incoming-webhooks).
+
+Start by setting up an [incoming webhook integration](https://my.teams.com/services/new/incoming-webhook/) in your Teams workspace.
+
+Doing serverless with Terraform? Check out [serverless.tf framework](https://serverless.tf), which aims to simplify all operations when working with the serverless in Terraform.
+
+## Supported Features
+
+- AWS Lambda runtime Python 3.8
+- Create new SNS topic or use existing one
+- Support plaintext and encrypted version of Teams webhook URL
+- Most of Teams message options are customizable
+- Various event types are supported, even generic messages:
+  - AWS CloudWatch Alarms
+  - AWS CloudWatch LogMetrics Alarms
+  - AWS GuardDuty Findings
+
+## Usage
+
+```hcl
+module "notify_teams" {
+  source  = "git::https://github.com/trustedshops/terraform-aws-notify-teams.git?ref=v5.0.0"
+
+  sns_topic_name = "teams-topic"
+
+  teams_webhook_url = "https://hooks.teams.com/services/AAA/BBB/CCC"
+}
+```
+
+## Using with Terraform Cloud Agents
+
+[Terraform Cloud Agents](https://www.terraform.io/docs/cloud/workspaces/agent.html) are a paid feature, available as part of the Terraform Cloud for Business upgrade package.
+
+This module requires Python 3.8. You can customize [tfc-agent](https://hub.docker.com/r/hashicorp/tfc-agent) to include Python using this sample `Dockerfile`:
+
+```
+FROM hashicorp/tfc-agent:latest
+RUN apt-get -y update && apt-get -y install python3.8 python3-pip
+ENTRYPOINT ["/bin/tfc-agent"]
+```
+
+## Use existing SNS topic or create new
+
+If you want to subscribe the AWS Lambda Function created by this module to an existing SNS topic you should specify `create_sns_topic = false` as an argument and specify the name of existing SNS topic name in `sns_topic_name`.
+
+## Examples
+
+- [notify-teams-simple](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/examples/notify-teams-simple) - Creates SNS topic which sends messages to Teams channel.
+- [cloudwatch-alerts-to-teams](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/examples/cloudwatch-alerts-to-teams) - End to end example which shows how to send AWS Cloudwatch alerts to Teams channel and use KMS to encrypt webhook URL.
+
+## Local Development and Testing
+
+See the [functions](https://github.com/terraform-aws-modules/terraform-aws-notify-teams/tree/master/functions) for further details.
+
+# Module documentation
+
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.13.1 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.0 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.0 |
 
 ## Providers
 
@@ -81,3 +148,52 @@
 | <a name="output_notify_teams_lambda_function_version"></a> [notify\_teams\_lambda\_function\_version](#output\_notify\_teams\_lambda\_function\_version) | Latest published version of your Lambda function |
 | <a name="output_teams_topic_arn"></a> [teams\_topic\_arn](#output\_teams\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams |
 | <a name="output_this_teams_topic_arn"></a> [this\_teams\_topic\_arn](#output\_this\_teams\_topic\_arn) | The ARN of the SNS topic from which messages will be sent to Teams (backward compatibility for version 4.x) |
+
+## Development
+
+### Development requirements
+
+The listed tools are required to develop within this repository:
+- [pre-commit](https://pre-commit.com/)
+- [terraform-docs](https://github.com/terraform-docs/terraform-docs)
+- [terraform](https://www.terraform.io/)
+- [tfsec](https://tfsec.dev/)
+- [tflint](https://github.com/terraform-linters/tflint)
+- [tflint-ruleset-tps-codestyle](https://github.com/trustedshops/tflint-ruleset-tps-codestyle)
+
+To easily install all of them in one step, you can use the instructions provided [here](https://github.com/trustedshops/aws-toolbox/blob/master/docs/docs/setting-up-awsume.md)
+
+### Commit message format
+
+We have very precise rules over how our Git commit messages must be formatted.
+
+This format leads to **easier to read commit history** and the ability to create auomated reeleases with semantic-commit.
+
+```
+<type>(<scope>): <short summary>
+  │       │             │
+  │       │             └─⫸ Summary in present tense. Not capitalized. No period at the end.
+  │       │
+  │       └─⫸ Commit Scope: This is usually a ticket number, if available
+  │
+  └─⫸ Commit Type: build|ci|docs|feat|fix|perf|refactor|test
+```
+
+The `<type>` and `<summary>` fields are mandatory, the `(<scope>)` field is optional.
+
+Example: `feat(TPSDO-1337): added option for additional environment variables`
+
+#### Release type per commit message
+
+| Commit message           | Release type     |
+|--------------------------|------------------|
+| fix(scope): summary      | Patch Release    |
+| feat(scope): summary     | Feature Release  |
+| perf(scope): summary     | Breaking Release |
+| BREAKING CHANGE: summary | Breaking Release |
+
+### README Header / Footer
+
+- The header for the README is located in [.readme-header.md](.readme-header.md). If you change it, you also need to regenerate the README
+- The footer for the README is located in [.readme-footer.md](.readme-footer.md). If you change it, you also need to regenerate the README
+<!-- END_TF_DOCS -->

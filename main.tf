@@ -78,7 +78,7 @@ resource "null_resource" "this" {
   count = var.create ? 1 : 0
   provisioner "local-exec" {
     command     = "pipenv lock && pipenv requirements > requirements.txt"
-    working_dir = "${path.module}/functions"
+    working_dir = "${path.module}/src"
   }
 }
 
@@ -91,10 +91,23 @@ module "lambda" {
   function_name = var.lambda_function_name
   description   = var.lambda_description
 
-  handler = "notify_teams.lambda_handler"
+  handler = "main.lambda_handler"
   source_path = [{
-    path             = "${path.module}/functions/notify_teams.py",
-    pip_requirements = "${path.module}/functions/requirements.txt"
+    path             = "${path.module}/src",
+    pip_requirements = "${path.module}/src/requirements.txt"
+    patterns = [
+      "!.DS_Store",
+      "!__pycache__/.*",
+      "!.idea/.*",
+      "!.pytest_cache/.*",
+      "!notifyteams.egg-info/.*",
+      "!tests/.*",
+      "!.flake8",
+      "!.gitignore",
+      "!.pyproject.toml",
+      "!Pipfile",
+      "!Pipfile.lock",
+    ]
   }]
   recreate_missing_package       = var.recreate_missing_package
   runtime                        = "python3.11"
